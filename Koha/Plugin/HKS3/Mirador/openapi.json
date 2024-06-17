@@ -1,0 +1,34 @@
+{
+    "/biblionumbers": {
+        "get": {
+            "x-mojo-to": "HKS3::Mirador::MiradorController#get",
+            "operationId": "GetManifestByBiblionumbers",
+            "tags": ["biblios"],
+            "parameters": [{
+                "name": "bn",
+                "in": "query",
+                "description": "id",
+                "required": true,
+                "type": "array",
+                "items": { "type": "integer" },
+                "collectionFormat": "multi"
+            }],
+            "produces": [
+                "application/json"
+            ],
+            "responses": {
+                "200": {
+                    "description": "List of records matching the given biblio numbers that have coordinates stored in their MARC data",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "object"                            
+                            }                            
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
