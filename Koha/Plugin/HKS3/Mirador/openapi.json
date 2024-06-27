@@ -5,7 +5,7 @@
             "operationId": "GetManifestByBiblionumbers",
             "tags": ["biblios"],
             "parameters": [{
-                "name": "bn",
+                "name": "biblionumber",
                 "in": "query",
                 "description": "id",
                 "required": true,

@@ -19,7 +19,7 @@ $(document).ready(function() {
         $("#tab_volumes").show();
         
         $(function(e) {
-            var ajaxData = { 'bn': biblionumber };
+            var ajaxData = { 'biblionumber': biblionumber };
             $.ajax({
               url: '/api/v1/contrib/hks3_mirador/biblionumbers',
             type: 'GET',
@@ -32,17 +32,30 @@ $(document).ready(function() {
             //var tabs = $('#'+tab_classname+' ul')
             //    .append('<li id="tab_volumes"><a id="vol_label" href="#volumes">Volume</a></li>');
             
-            // #breadcrumbs document.querySelector("#breadcrumbs")
-            var volumes = $("#breadcrumbs")            
+            // breadcrumbs document.querySelector("#breadcrumbs")
+            // var volumes = $("#breadcrumbs").after(volumes_table);                   
             // var volumes = $("#catalogue_detail_biblio > div.record > h1")
-                .after(volumes_table);       
+            $("body").append(`
+            <div class="modal" id="miradorModal" tabindex="-1" aria-labelledby="miradorModalLabel"
+             aria-hidden="true"><div class="modal-dialog"
+             ><div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="miradorModalLabel">Mirador Header</h5>
+                    <button type="button" class="closebtn" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div><div class="modal-body">
+                        <div id="mirador">Mirador Body</div></div>
+                        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button></div></div></div></div>`);
+
+             $(".results_summary.online_resources").append(`<a role="button" type="button" class="btn btn-secondary" 
+                    onclick="$('#miradorModal').modal('show')">open mirador viewer</a>`);
+                        
             var miradorInstance = Mirador.viewer({
                 id: 'mirador',
                 // theme: {
                 //   transitions: window.location.port === '4488' ?  { create: () => 'none' } : {},
                 // },
                 windows: [{
-                    manifestId: '/api/v1/contrib/hks3_mirador/biblionumbers?bn='+biblionumber
+                    manifestId: '/api/v1/contrib/hks3_mirador/biblionumbers?biblionumber='+biblionumber
                 }]
             });               
         })   

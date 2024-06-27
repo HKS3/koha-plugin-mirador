@@ -108,6 +108,7 @@ sub create_iiif_manifest {
     
     my @data = $record->field('856');
     return undef unless @data;
+    return undef unless $data[0]->subfield('2') eq 'IIIF';
     my $ug = Data::UUID->new;
 
 

@@ -11,7 +11,7 @@ use Koha::Plugin::HKS3::Mirador qw/create_iiif_manifest/;
 
 sub get {
     my $c = shift->openapi->valid_input or return;
-    my $biblionumber = $c->validation->param('bn');
+    my $biblionumber = $c->validation->param('biblionumber');
     
     my $manifest = create_iiif_manifest($biblionumber);
     return $c->render( status => 404) unless $manifest;
