@@ -12,11 +12,45 @@ use Koha::Plugin::HKS3::Mirador qw/create_iiif_manifest/;
 sub get {
     my $c = shift->openapi->valid_input or return;
     my $biblionumber = $c->validation->param('biblionumber');
-    
+    my $viewer = $c->validation->param('viewer');    
+
+    return $c->render(status => 200, text => viewer($biblionumber)) if $viewer;    
     my $manifest = create_iiif_manifest($biblionumber);
     return $c->render( status => 404) unless $manifest;
     return $c->render( status => 200, openapi => $manifest);
 }
 
+sub viewer {
+    my $biblionumber = shift;
+my $html = <<'EOT';
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#000000">
+    <title>Mirador</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500">
+    <script src="https://unpkg.com/mirador@latest/dist/mirador.min.js" crossorigin=""></script>
+  </head>
+  <body>
+    <div id="mirador" style="position: absolute; top: 0; bottom: 0; left: 0; right: 0;"></div>    
+    <script type="text/javascript">
+    var miradorInstance = Mirador.viewer({
+             id: 'mirador',
+             theme: {
+                transitions: window.location.port === '4488' ?  { create: () => 'none' } : {},
+             },
+             windows: [{
+                 manifestId: '/api/v1/contrib/hks3_mirador/biblionumbers?biblionumber=XBIBX'
+             }]
+         });                            
+    </script>
+  </body>
+</html>
+EOT
+
+$html =~ s/XBIBX/$biblionumber/g;
+return $html;
+}
 
 1;

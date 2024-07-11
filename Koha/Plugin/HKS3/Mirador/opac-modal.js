@@ -35,18 +35,34 @@ $(document).ready(function() {
             // breadcrumbs document.querySelector("#breadcrumbs")
             // var volumes = $("#breadcrumbs").after(volumes_table);                   
             // var volumes = $("#catalogue_detail_biblio > div.record > h1")
-            
-
-
-            $("#catalogue_detail_biblio > div.record").append(`
-               <iframe src="/api/v1/contrib/hks3_mirador/biblionumbers?biblionumber=`+biblionumber+`&viewer=1" width="800" height="600" 
-               marginwidth="0" marginheight="0" frameborder="0" scrolling="no" id="frame" allowfullscreen="">
-               <div id="mirador">Mirador Body</div>
-               </iframe>
+            $("body").append(`
+            <div class="modal" id="miradorModal" tabindex="-1" aria-labelledby="miradorModalLabel"
+             aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+             ><div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="miradorModalLabel">Mirador Header</h5>
+                    <button type="button" class="closebtn" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div><div class="modal-body">
+                        <div id="mirador">Mirador Body</div></div>
+                        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div></div></div></div>
             `);
 
-                                                
-           
+                        
+            var miradorInstance = Mirador.viewer({
+                id: 'mirador',
+                theme: {
+                   transitions: window.location.port === '4488' ?  { create: () => 'none' } : {},
+                },
+                windows: [{
+                    manifestId: '/api/v1/contrib/hks3_mirador/biblionumbers?biblionumber='+biblionumber
+                }]
+            });               
+
+            $(".results_summary.online_resources").append(`<a role="button" type="button" class="btn btn-secondary" 
+                    onclick="$('#miradorModal').modal('show')">open mirador viewer</a>`);
+             
+            $('#miradorModal').modal('handleUpdate');
         })   
         .error(function(data) {
             console.log('no data found');

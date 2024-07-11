@@ -12,7 +12,15 @@
                 "type": "array",
                 "items": { "type": "integer" },
                 "collectionFormat": "multi"
-            }],
+            },
+            {
+                "name": "viewer",
+                "in": "query",
+                "description": "viewer",
+                "required": false,
+                "type": "integer"
+            }
+            ],
             "produces": [
                 "application/json"
             ],
