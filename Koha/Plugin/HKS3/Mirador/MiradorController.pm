@@ -5,7 +5,7 @@ use Mojo::Base 'Mojolicious::Controller';
 
 use Koha::Biblios;
 use MARC::File::XML ( DefaultEncoding => 'utf8' );
-use Koha::Plugin::HKS3::Mirador qw/create_iiif_manifest/;
+use Koha::Plugin::HKS3::Mirador qw/get_manifest_from_koha/;
 
 
 
@@ -15,8 +15,8 @@ sub get {
     my $viewer = $c->validation->param('viewer');    
 
     return $c->render(status => 200, text => viewer($biblionumber)) if $viewer;    
-    my $manifest = create_iiif_manifest($biblionumber);
-    return $c->render( status => 404) unless $manifest;
+    my $manifest = get_manifest_from_koha($biblionumber);
+    return $c->render( status => 404, openapi => {'error' => '404'}) unless $manifest;
     return $c->render( status => 200, openapi => $manifest);
 }
 

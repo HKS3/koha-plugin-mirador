@@ -26,7 +26,18 @@
             ],
             "responses": {
                 "200": {
-                    "description": "List of records matching the given biblio numbers that have coordinates stored in their MARC data",
+                    "description": "IIIF manifest in json format",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "object"                            
+                            }                            
+                        }
+                    }
+                },
+                "404": {
+                    "description": "no IIIF info found",
                     "schema": {
                         "type": "object",
                         "properties": {

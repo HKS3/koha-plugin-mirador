@@ -27,6 +27,9 @@ use C4::Context;
 use C4::Koha;
 use Koha::AuthorisedValues;
 use Data::UUID;
+use File::Slurp;
+use HTTP::Tiny;
+use Koha::Plugin::HKS3::IIIF qw(create_iiif_manifest);
 
 use Mojo::JSON qw(decode_json);
 
@@ -53,7 +56,7 @@ our $metadata = {
     version => $VERSION,
 };
 
-our @EXPORT    = qw(create_iiif_manifest);
+our @EXPORT    = qw(get_manifest_from_koha);
 
 my $config = {
     server => 'http://10.0.0.200:8182/iiif/3',
@@ -101,90 +104,33 @@ sub handle_iiif_manifest {
     print encode_json($manifest);
 }
 
-sub create_iiif_manifest {
+sub get_manifest_from_koha {
     my ($biblionumber) = @_;
     my $biblio = Koha::Biblios->find($biblionumber);
     my $record       = $biblio->metadata->record;
     
     my @data = $record->field('856');
     return undef unless @data;
+    if ($data[0]->subfield('2') && $data[0]->subfield('2') eq 'IIIF-Manifest')  {
+        my $url = 'http://10.0.0.200:8183/roseggern-manifest.json';
+        my $http = HTTP::Tiny->new;
+        my $response = $http->get($url);
+        if ($response->{success}) {    
+            return decode_json($response->{content});            
+        } else {
+            return undef;
+        }
+    }        
     return undef unless $data[0]->subfield('2') &&  $data[0]->subfield('2') eq 'IIIF';
-    my $ug = Data::UUID->new;
-
-
- # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg/full/full/0/default.jpg',
- # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg',
-    my @canvases;
-    for my $d (@data) {
-        my $image_path = $d->subfield('d');            
-        my $canvas_template = {
-                '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                '@type' =>  'sc:Canvas',
-                'label' =>  'cantaloupe',
-                'height' =>  164,
-                'width' =>  308,
-                'images' =>  [
-                    {
-                    '@context' =>  'http://iiif.io/api/presentation/2/context.json',
-                    '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                    '@type' =>  'oa:Annotation',
-                    'motivation' =>  'sc:painting',
-                    'resource' =>  {
-                        # '@id' =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{server}, $image_path),
-                        '@type' =>  'dctypes:Image',
-                        'format' =>  'image/jpeg',
-                        'service' =>  {
-                        '@context' =>  'http://iiif.io/api/image/3/context.json',
-                        '@id' =>  sprintf('%s/%s', $config->{server}, $image_path),
-                        'profile' =>  'level2'
-                        },
-                        'height' =>  164,
-                        'width' =>  308
-                    },
-                    'on' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                    }
-                ],
-                'related' =>  ''
-        };
-        push (@canvases, $canvas_template);
-    }
-
-    my $manifest =
-        {
-        '@context' =>  'http://iiif.io/api/presentation/2/context.json',
-        '@id' =>  'http://ddeba432-e420-482e-a8bd-1f828d6d7a3e',
-        '@type' =>  'sc:Manifest',
-        'label' =>  $record->field('245')->subfield('a'),
-        'metadata' =>  [],
-        'description' =>  [
-            {
-            '@value' =>  '[Click to edit description]',
-            '@language' =>  'en'
-            }
-        ],
-        'license' =>  'https://creativecommons.org/licenses/by/3.0/',
-        'attribution' =>  '[Click to edit attribution]',
-        'sequences' =>  [
-            {
-            '@id' =>  'http://f617846c-3c25-4fa8-bf18-ab91ebf35c3d',
-            '@type' =>  'sc:Sequence',
-            'label' =>  [
-                {
-                '@value' =>  'Normal Sequence',
-                '@language' =>  'en'
-                }
-            ],
-            'canvases' =>   
-                \@canvases                    
-            }
-        ],
-        'structures' =>  []
-        };
-
     
-
-    return $manifest;
-    }
+    my @f856 = map { $_->subfield('d') } $record->field('856');
+    my $record_data = {
+        image_data => \@f856,        
+        label => $record->field('245')->subfield('a'),
+    };
+    Koha::Plugin::HKS3::IIIF::create_iiif_manifest($record_data, $config);
+}    
+    
 
 sub opac_head {
     my ( $self ) = @_;
