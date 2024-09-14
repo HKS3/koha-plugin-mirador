@@ -22,19 +22,20 @@ use Data::UUID;
 use File::Slurp;
 use HTTP::Tiny;
 use Try::Tiny;
+use Template;
 
 our @EXPORT = qw(create_iiif_manifest);
 
 sub create_iiif_manifest {
-    my ($record_data, $config) = @_;
+    my ($record_data, $config, $canvas_template, $manifest_template) = @_;
     
  # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg/full/full/0/default.jpg',
  # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg',
     my $ug = Data::UUID->new;
     my @canvases;
     for my $d (@{$record_data->{image_data}}) {
-        
-        my $canvas_template = {
+
+       $canvas_template = {
                 '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
                 '@type' =>  'sc:Canvas',
                 'label' =>  'cantaloupe',
@@ -52,7 +53,7 @@ sub create_iiif_manifest {
                         'format' =>  'image/jpeg',
                         'service' =>  {
                         '@context' =>  'http://iiif.io/api/image/3/context.json',
-                        '@id' =>  sprintf('%s/%s', $config->{server}, $d),
+                        '@id' =>  sprintf('%s/%s', $config->{iiif_server}, $d),
                         'profile' =>  'level2'
                         },
                         'height' =>  164,
@@ -66,7 +67,7 @@ sub create_iiif_manifest {
         push (@canvases, $canvas_template);
     }
 
-    my $manifest =
+    $manifest_template =
         {
         '@context' =>  'http://iiif.io/api/presentation/2/context.json',
         '@id' =>  'http://ddeba432-e420-482e-a8bd-1f828d6d7a3e',
@@ -75,12 +76,12 @@ sub create_iiif_manifest {
         'metadata' =>  [],
         'description' =>  [
             {
-            '@value' =>  '[Click to edit description]',
+            '@value' =>  '',
             '@language' =>  'en'
             }
         ],
         'license' =>  'https://creativecommons.org/licenses/by/3.0/',
-        'attribution' =>  '[Click to edit attribution]',
+        'attribution' =>  '',
         'sequences' =>  [
             {
             '@id' =>  'http://f617846c-3c25-4fa8-bf18-ab91ebf35c3d',
@@ -100,5 +101,7 @@ sub create_iiif_manifest {
 
     
 
-    return $manifest;
+    return $manifest_template;
     }
+
+1;

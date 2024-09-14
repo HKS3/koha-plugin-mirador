@@ -59,7 +59,8 @@ our $metadata = {
 our @EXPORT    = qw(get_manifest_from_koha);
 
 my $config = {
-    server => 'http://10.0.0.200:8182/iiif/3',
+    iiif_server => 'http://10.0.0.200:8182/iiif/3',
+    manifest_server => 'http://10.0.0.200:8183/',
     datadir => '',
 };
 
@@ -112,7 +113,8 @@ sub get_manifest_from_koha {
     my @data = $record->field('856');
     return undef unless @data;
     if ($data[0]->subfield('2') && $data[0]->subfield('2') eq 'IIIF-Manifest')  {
-        my $url = 'http://10.0.0.200:8183/roseggern-manifest.json';
+        # my $url = 'http://10.0.0.200:8183/roseggern-manifest.json';
+        my $url = sprintf("%s/%s", $data[0]->subfield('a'), $data[0]->subfield('d'));
         my $http = HTTP::Tiny->new;
         my $response = $http->get($url);
         if ($response->{success}) {    
