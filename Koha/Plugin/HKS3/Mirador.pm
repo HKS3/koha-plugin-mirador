@@ -30,6 +30,7 @@ use Data::UUID;
 use File::Slurp;
 use HTTP::Tiny;
 use Koha::Plugin::HKS3::IIIF qw(create_iiif_manifest);
+use Koha::Logger;
 
 use Mojo::JSON qw(decode_json);
 
@@ -60,7 +61,7 @@ our @EXPORT    = qw(get_manifest_from_koha);
 
 my $config = {
     iiif_server => 'http://10.0.0.200:8182/iiif/3',
-    manifest_server => 'http://10.0.0.200:8183/',
+    manifest_server => 'http://10.0.0.200/mh/manifest',
     datadir => '',
 };
 
@@ -111,26 +112,32 @@ sub get_manifest_from_koha {
     my $record       = $biblio->metadata->record;
     
     my @data = $record->field('856');
-    return undef unless @data;
-    if ($data[0]->subfield('2') && $data[0]->subfield('2') eq 'IIIF-Manifest')  {
-        # my $url = 'http://10.0.0.200:8183/roseggern-manifest.json';
-        my $url = sprintf("%s/%s", $data[0]->subfield('a'), $data[0]->subfield('d'));
-        my $http = HTTP::Tiny->new;
-        my $response = $http->get($url);
-        if ($response->{success}) {    
-            return decode_json($response->{content});            
-        } else {
-            return undef;
-        }
-    }        
-    return undef unless $data[0]->subfield('2') &&  $data[0]->subfield('2') eq 'IIIF';
     
-    my @f856 = map { $_->subfield('d') } $record->field('856');
-    my $record_data = {
-        image_data => \@f856,        
-        label => $record->field('245')->subfield('a'),
-    };
-    Koha::Plugin::HKS3::IIIF::create_iiif_manifest($record_data, $config);
+    return undef unless @data;
+    foreach my $field (@data) {
+    #my $field = $data[0];
+        if ($field->subfield('2') && $data[0]->subfield('2') eq 'IIIF-Manifest')  {
+            # my $url = 'http://10.0.0.200/mh/manifest/A/B/roseggern/manifest.json';
+            my $url = sprintf("%s/%s", $config->{manifest_server}, $field->subfield('d'));
+            my $http = HTTP::Tiny->new;
+            my $response = $http->get($url);
+            if ($response->{success}) {    
+                return decode_json($response->{content});            
+            } else {
+                return undef;
+            }
+        }
+
+        return undef unless $field->subfield('2') && $field->subfield('2') eq 'IIIF';
+        
+        warn("found IIIF");
+        my @f856 = map { $_->subfield('d') } $field;
+        my $record_data = {
+            image_data => \@f856,        
+            label => $record->field('245')->subfield('a'),
+        };
+        return Koha::Plugin::HKS3::IIIF::create_iiif_manifest($record_data, $config);
+    }
 }    
     
 

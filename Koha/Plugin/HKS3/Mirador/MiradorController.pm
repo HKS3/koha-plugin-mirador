@@ -13,10 +13,11 @@ sub get {
     my $c = shift->openapi->valid_input or return;
     my $biblionumber = $c->validation->param('biblionumber');
     my $viewer = $c->validation->param('viewer');    
-
+    warn ("XXX");
     return $c->render(status => 200, text => viewer($biblionumber)) if $viewer;    
     my $manifest = get_manifest_from_koha($biblionumber);
-    return $c->render( status => 404, openapi => {'error' => '404'}) unless $manifest;
+    return $c->render( status => 404, openapi => 
+      {'error' => '404', 'no IIIF data found for biblionumber' => $biblionumber}) unless $manifest;
     return $c->render( status => 200, openapi => $manifest);
 }
 

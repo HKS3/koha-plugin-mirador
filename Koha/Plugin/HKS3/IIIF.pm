@@ -23,8 +23,21 @@ use File::Slurp;
 use HTTP::Tiny;
 use Try::Tiny;
 use Template;
+use CAM::PDF;
+use File::Spec;
 
 our @EXPORT = qw(create_iiif_manifest);
+
+sub create_iiif_manifest_from_pdf {
+    my ($pdf_file, $name, $config, $filename) = @_;    
+    my $pdf = CAM::PDF->new($pdf_file) or die "$pdf_file Cannot open PDF file: $!";    
+    my $num_pages = $pdf->numPages();
+    my @images;
+    for my $i (1..$pdf->numPages()) {
+        push(@images, sprintf("%s;%d", $name, $i));
+    }
+    return @images;
+}    
 
 sub create_iiif_manifest {
     my ($record_data, $config, $canvas_template, $manifest_template) = @_;
