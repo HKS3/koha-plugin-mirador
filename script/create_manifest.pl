@@ -15,7 +15,15 @@ use File::Basename;
 use File::Spec;
 use File::Path qw(make_path);
 
-my $config = {
+
+my $config_test = { 
+    iiif_server => 'http://10.0.0.200:8182/iiif/2',
+    image_dir => '/home/mh/cantaloupe/images',
+    manifest_dir => '/var/www/html/mh/manifest',
+
+};
+
+my $config_stage = {
     iiif_server => 'http://10.0.0.200:8182/iiif/2',
     image_dir => '/home/mh/cantaloupe/images',
     manifest_dir => '/var/www/html/mh/manifest',

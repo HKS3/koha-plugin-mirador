@@ -59,11 +59,21 @@ our $metadata = {
 
 our @EXPORT    = qw(get_manifest_from_koha);
 
-my $config = {
+my $config_test = {
     iiif_server => 'http://10.0.0.200:8182/iiif/2',
     manifest_server => 'http://10.0.0.200/mh/manifest',
     datadir => '',
 };
+
+my $config_stage = {
+    iiif_server => 'https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/3',
+    manifest_server => 'http://10.0.0.200/mh/manifest',
+    # manifest_dir => '/opt/cantaloupe/manifest',
+};
+
+my $config = $config_stage;
+
+# https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/3/Homeneu.jpg/full/max/0/default.jpg
 
 sub new {
     my ( $class, $args ) = @_;
@@ -161,7 +171,46 @@ sub get_manifest_from_koha {
             image_data => \@f856,        
             label => $record->field('245')->subfield('a'),
         };
+    return undef unless $data[0]->subfield('2') &&  $data[0]->subfield('2') eq 'IIIF';
+    my $ug = Data::UUID->new;
+
+
+ # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg/full/full/0/default.jpg',
+ # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg',
+    my @canvases;
+    for my $d (@data) {
+        my $image_path = $d->subfield('d');            
+        my $canvas_template = {
+                '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
+                '@type' =>  'sc:Canvas',
+                'label' =>  'cantaloupe',
+                'height' =>  164,
+                'width' =>  308,
+                'images' =>  [
+                    {
+                    '@context' =>  'http://iiif.io/api/presentation/2/context.json',
+                    '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
+                    '@type' =>  'oa:Annotation',
+                    'motivation' =>  'sc:painting',
+                    'resource' =>  {
+                        # '@id' =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{server}, $image_path),
+                        '@type' =>  'dctypes:Image',
+                        # 'format' =>  'image/jpeg',
+                        'service' =>  {
+                        '@context' =>  'http://iiif.io/api/image/3/context.json',
+                        '@id' =>  sprintf('%s/%s', $config->{server}, $image_path),
+                        'profile' =>  'level2'
+                        },
+                        'height' =>  164,
+                        'width' =>  308
+                    },
+                    'on' =>  sprintf('http://%s', $ug->to_string($ug->create())),
+                    }
+                ],
+                'related' =>  ''
+        };
         return Koha::Plugin::HKS3::IIIF::create_iiif_manifest($record_data, $config);
+    }
     }
 }    
     
