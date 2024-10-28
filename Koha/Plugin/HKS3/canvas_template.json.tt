@@ -1,0 +1,28 @@
+{
+    "@id": "http://[% uuid1 %]",
+    "@type": "sc:Canvas",
+    "label": "cantaloupe",
+    "height": [% height %],
+    "width": [% width %],
+    "images": [
+        {
+            "@context": "http://iiif.io/api/presentation/2/context.json",
+            "@id": "http://[% uuid2 %]",
+            "@type": "oa:Annotation",
+            "motivation": "sc:painting",
+            "resource": {
+                "@type": "dctypes:Image",
+                "format": "image/jpeg",
+                "service": {
+                    "@context": "http://iiif.io/api/image/3/context.json",
+                    "@id": "[% iiif_server %]/[% image_path %]",
+                    "profile": "level2"
+                },
+                "height": [% resource_height %],
+                "width": [% resource_width %]
+            },
+            "on": "http://[% uuid3 %]"
+        }
+    ],
+    "related": ""
+}
