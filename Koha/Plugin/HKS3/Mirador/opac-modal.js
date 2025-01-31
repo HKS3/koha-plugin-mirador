@@ -21,7 +21,7 @@ $(document).ready(function() {
         $(function(e) {
             var ajaxData = { 'biblionumber': biblionumber };
             $.ajax({
-              url: '/api/v1/contrib/hks3_mirador/biblionumbers',
+              url: '/api/v1/contrib/hks3_mirador/iiifmanifest',
             type: 'GET',
             dataType: 'json',
             data: ajaxData,
@@ -55,7 +55,7 @@ $(document).ready(function() {
                    transitions: window.location.port === '4488' ?  { create: () => 'none' } : {},
                 },
                 windows: [{
-                    manifestId: '/api/v1/contrib/hks3_mirador/biblionumbers?biblionumber='+biblionumber
+                    manifestId: '/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber='+biblionumber
                 }]
             });               
 

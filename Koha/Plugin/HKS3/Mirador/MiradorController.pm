@@ -12,8 +12,7 @@ use Koha::Plugin::HKS3::Mirador qw/get_manifest_from_koha/;
 sub get {
     my $c = shift->openapi->valid_input or return;
     my $biblionumber = $c->validation->param('biblionumber');
-    my $viewer = $c->validation->param('viewer');    
-    warn ("XXX");
+    my $viewer = $c->validation->param('viewer');        
     return $c->render(status => 200, text => viewer($biblionumber)) if $viewer;    
     my $manifest = get_manifest_from_koha($biblionumber);
     return $c->render( status => 404, openapi => 
@@ -42,7 +41,7 @@ my $html = <<'EOT';
                 transitions: window.location.port === '4488' ?  { create: () => 'none' } : {},
              },
              windows: [{
-                 manifestId: '/api/v1/contrib/hks3_mirador/biblionumbers?biblionumber=XBIBX'
+                 manifestId: '/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=XBIBX'
              }]
          });                            
     </script>

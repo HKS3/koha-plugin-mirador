@@ -21,7 +21,7 @@ $(document).ready(function() {
         $(function(e) {
             var ajaxData = { 'biblionumber': biblionumber };
             $.ajax({
-              url: '/api/v1/contrib/hks3_mirador/biblionumbers',
+              url: '/api/v1/contrib/hks3_mirador/iiifmanifest',
             type: 'GET',
             dataType: 'json',
             data: ajaxData,
@@ -36,16 +36,12 @@ $(document).ready(function() {
             // var volumes = $("#breadcrumbs").after(volumes_table);                   
             // var volumes = $("#catalogue_detail_biblio > div.record > h1")
             
-
-
             $("#catalogue_detail_biblio > div.record").append(`
-               <iframe src="/api/v1/contrib/hks3_mirador/biblionumbers?biblionumber=`+biblionumber+`&viewer=1" width="800" height="600" 
+               <iframe src="/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=`+biblionumber+`&viewer=1" width="800" height="600" 
                marginwidth="0" marginheight="0" frameborder="0" scrolling="no" id="frame" allowfullscreen="">
                <div id="mirador">Mirador Body</div>
                </iframe>
-            `);
-
-                                                
+            `);                                 
            
         })   
         .error(function(data) {
@@ -54,3 +50,4 @@ $(document).ready(function() {
         });
     }
 })
+

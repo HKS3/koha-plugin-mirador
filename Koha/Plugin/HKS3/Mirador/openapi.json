@@ -1,5 +1,5 @@
 {
-    "/biblionumbers": {
+    "/iiifmanifest": {
         "get": {
             "x-mojo-to": "HKS3::Mirador::MiradorController#get",
             "operationId": "GetManifestByBiblionumbers",
