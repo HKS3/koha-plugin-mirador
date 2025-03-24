@@ -48,12 +48,13 @@ sub create_iiif_manifest {
     my $ug = Data::UUID->new;
     my @canvases;
     # IIIF templates should be template toolkit
+    my $count = 1;
     for my $d (@{$record_data->{image_data}}) {
 
         $canvas_template = {
                 '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
                 '@type' =>  'sc:Canvas',
-                'label' =>  'cantaloupe mh',
+                'label' =>  sprintf("# %s", $count),
                 'height' =>  2805,
                 'width' =>  1760,
                 'images' =>  [
@@ -82,6 +83,7 @@ sub create_iiif_manifest {
                 'related' =>  ''
         };
         push (@canvases, $canvas_template);
+        $count++;
     }
 
     $manifest_template =
