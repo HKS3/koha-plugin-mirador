@@ -37,7 +37,8 @@ sub create_iiif_manifest_from_pdf {
         push(@images, sprintf("%s;%d", $name, $i));
     }
     return @images;
-}    
+}
+
 
 sub create_iiif_manifest {
     my ($record_data, $config, $canvas_template, $manifest_template) = @_;
@@ -46,31 +47,34 @@ sub create_iiif_manifest {
  # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg',
     my $ug = Data::UUID->new;
     my @canvases;
+    # IIIF templates should be template toolkit
     for my $d (@{$record_data->{image_data}}) {
 
-       $canvas_template = {
+        $canvas_template = {
                 '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
                 '@type' =>  'sc:Canvas',
-                'label' =>  'cantaloupe',
-                'height' =>  164,
-                'width' =>  308,
+                'label' =>  'cantaloupe mh',
+                'height' =>  2805,
+                'width' =>  1760,
                 'images' =>  [
                     {
                     '@context' =>  'http://iiif.io/api/presentation/2/context.json',
-                    '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                    '@type' =>  'oa:Annotation',
+                    '@id' =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),                    
+                    # '@type' =>  'oa:Annotation',
                     'motivation' =>  'sc:painting',
                     'resource' =>  {
                         # '@id' =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{server}, $image_path),
+                        '@id' =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),
                         '@type' =>  'dctypes:Image',
                         'format' =>  'image/jpeg',
                         'service' =>  {
-                        '@context' =>  'http://iiif.io/api/image/3/context.json',
-                        '@id' =>  sprintf('%s/%s', $config->{iiif_server}, $d),
-                        'profile' =>  'level2'
+                            '@context' =>  'http://iiif.io/api/image/3/context.json',
+                            '@id' =>  sprintf('%s/%s', $config->{iiif_server}, $d),
+                            # sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),   
+                            'profile' =>  'level2'
                         },
-                        'height' =>  164,
-                        'width' =>  308
+                        'height' =>  2805,
+                        'width' =>  1760
                     },
                     'on' =>  sprintf('http://%s', $ug->to_string($ug->create())),
                     }
@@ -86,8 +90,177 @@ sub create_iiif_manifest {
         '@id' =>  'http://ddeba432-e420-482e-a8bd-1f828d6d7a3e',
         '@type' =>  'sc:Manifest',
         'label' => $record_data->{label},
-        'metadata' =>  [],
-        'description' =>  [
+        'thumbnail' =>  {
+            '@id' => "http://10.0.0.200:8182/iiif/2/roseggern/full/200,/0/default.jpg",
+            'service' => {
+                '@context' =>  "http://iiif.io/api/image/2/context.json",
+                'profile' => "http://iiif.io/api/image/2/level2.json",
+                '@id' =>  "http://10.0.0.200:8182/iiif/2/roseggern"            }
+        },
+        'metadata' =>  [
+            {
+            'label' => [
+                {
+                '@value' => 'Id',
+                '@language' => 'en'
+                },
+                {
+                '@value' => 'Id',
+                '@language' => 'ger'
+                }
+            ],
+            'value' => 'wrz17030823'		
+            # Dürfte sich um die Quelle der Dateien handeln, also bei uns der Ordnername ??? -> dann wäre es z.B. KLZ-2020-10-25 ????
+            },
+            {
+            'label' => [
+                {
+                '@value' => 'Title',
+                '@language' => 'en'
+                },
+                {
+                '@value' => 'Titel',
+                '@language' => 'ger'
+                }
+            ],
+            'value' => 'Wiener Zeitung'	#XXX		245a
+            },
+            {
+            'label' => [			## XXX zusätzliche Metadaten
+                {
+                '@value' => 'Personal Name',
+                '@language' => 'en'
+                },
+                {
+                '@value' => 'Personenname',
+                '@language' => 'ger'
+                }
+            ],
+            'value' => 'WERT'	        #XXX		100a
+            },
+            {
+
+            'label' => [
+                {
+                '@value' => 'Type',
+                '@language' => 'en'
+                },
+                {
+                '@value' => 'Typ',
+                '@language' => 'ger'
+                }
+            ],
+            'value' => 'newspaper'		#XXX	942c
+            },
+            {
+            'label' => [
+                {
+                '@value' => 'Place of Publications',
+                '@language' => 'en'
+                },
+                {
+                '@value' => 'Erscheinungsort',
+                '@language' => 'ger'
+                }
+            ],
+            'value' => 'XXX 264a'
+            },
+            {
+            'label' => [
+                {
+                '@value' => 'Date Issued',
+                '@language' => 'en'
+                },
+                {
+                '@value' => 'Erscheinungsdatum',
+                '@language' => 'ger'
+                }
+            ],
+            'value' => '1703-08-23'			#XXX 264c
+            },
+            {
+            'label' => [			## zusätzliche Metadaten
+                    {
+                    '@value' => 'Extent ',
+                    '@language' => 'en'
+                    },
+                    {
+                    '@value' => 'Umfang',
+                    '@language' => 'ger'
+                    }
+                ],
+                'value' => 'WERT '	## XXX		300a
+            },
+            {
+            'label' => [			## zusätzliche Metadaten
+                    {
+                    '@value' => 'Signatur ',
+                    '@language' => 'en'
+                    },
+                    {
+                    '@value' => 'Signatur',
+                    '@language' => 'ger'
+                    }
+                ],
+                'value' => 'WERT '	## XXX		952o
+            },            
+            {
+            'label' => [
+                {
+                '@value' => 'Disseminator',
+                '@language' => 'en'
+                },
+                {
+                '@value' => 'Anbieter',
+                '@language' => 'ger'
+                }
+            ],
+            'value' => 'RaraBib'
+            },
+            {
+            'label' => [
+                {
+                '@value' => 'Languages',
+                '@language' => 'en'
+                },
+                {
+                '@value' => 'Sprachen',
+                '@language' => 'ger'
+                }
+            ],
+            'value' => 'ger'		##			041a – aber ansonsten Fixert: ger
+            }
+  ],
+  'description' => 'Wiener Zeitung 1703-08-23',  ## ???
+  'viewingDirection' => 'left-to-right',
+   # 'viewingHint' => 'paged',
+  'license' => 'http://creativecommons.org/publicdomain/mark/1.0/', ### muss noch besprochen werden!!!!!
+  'attribution' => [
+    {
+      '@value' => 'Austrian National Library',	## XXX	Fixwert: Styrian State Library
+      '@language' => 'en'
+    },
+    {
+      '@value' => 'Österreichische Nationalbibliothek',	# XXX Fixwert: Steiermärkische Landesbibliothek
+      '@language' => 'ger'
+    }
+  ],
+  'logo' => 'https://iiif.onb.ac.at/logo/',  ### XXX wird nachgeliefert der Link zu unserem LOGO
+  'seeAlso' => [ ### XXX müssen wir noch besprechen, bzw. erarbeiten
+    {
+      '@id' => 'http://anno.onb.ac.at/cgi-content/anno_pdf.pl?aid=wrz&datum=17030823',
+      'format' => 'application/pdf'
+    },
+    {
+      '@id' => 'http://anno.onb.ac.at/cgi-content/anno?aid=wrz&datum=17030823',
+      'format' => 'text/html'
+    },
+    {
+      '@id' => 'http://data.onb.ac.at/ANNO/wrz17030823.rdf',
+      'format' => 'application/rdf+xml'
+    }
+    ],
+    'description' =>  [
             {
             '@value' =>  '',
             '@language' =>  'en'
@@ -110,10 +283,7 @@ sub create_iiif_manifest {
             }
         ],
         'structures' =>  []
-        };
-
-    
-
+    };
     return $manifest_template;
     }
 

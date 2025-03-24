@@ -60,7 +60,7 @@ our $metadata = {
 our @EXPORT    = qw(get_manifest_from_koha);
 
 my $config = {
-    iiif_server => 'http://10.0.0.200:8182/iiif/3',
+    iiif_server => 'http://10.0.0.200:8182/iiif/2',
     manifest_server => 'http://10.0.0.200/mh/manifest',
     datadir => '',
 };
@@ -106,6 +106,35 @@ sub handle_iiif_manifest {
     print encode_json($manifest);
 }
 
+
+# either get manifest from url or from file
+sub get_manifest {
+    my $field = shift;
+    my $return;
+    if ($field->subfield('d') && ! $field->subfield('u') ) {
+        my $filename = $field->subfield('d');           
+        my $file = File::Spec->catfile($FindBin::Bin, $filename);
+        $return = read_file($file) or die "Could not open '$file': $!";      
+    } elsif ($field->subfield('u')) {  
+        my $url = sprintf("%s/%s", $config->{manifest_server}, $field->subfield('d'));
+    
+        my $http = HTTP::Tiny->new;
+        my $response = $http->get($url);
+        
+
+        if ($response->{success}) {
+            $return = decode_json($response->{content});   
+        }
+    }
+
+
+    return $return;
+}
+
+
+
+
+
 sub get_manifest_from_koha {
     my ($biblionumber) = @_;
     my $biblio = Koha::Biblios->find($biblionumber);
@@ -117,17 +146,13 @@ sub get_manifest_from_koha {
     foreach my $field (@data) {
     #my $field = $data[0];
         if ($field->subfield('2') && $data[0]->subfield('2') eq 'IIIF-Manifest')  {
-            # my $url = 'http://10.0.0.200/mh/manifest/A/B/roseggern/manifest.json';
-            my $url = sprintf("%s/%s", $config->{manifest_server}, $field->subfield('d'));
-            my $http = HTTP::Tiny->new;
-            my $response = $http->get($url);
-            if ($response->{success}) {    
-                return decode_json($response->{content});            
-            } else {
-                return undef;
-            }
+            my $manifest = get_manifest($field);
+            $manifest->{label} = $record->field('245')->subfield('a');                                   
+            $manifest->{metadata} = [ { value =>  $record->field('100')->subfield('a') } ];
+            return $manifest;           
         }
 
+        # single file handling may not be usefull/necessary at all
         return undef unless $field->subfield('2') && $field->subfield('2') eq 'IIIF';
         
         warn("found IIIF");

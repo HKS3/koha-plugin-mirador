@@ -1,0 +1,86 @@
+{
+    "attribution": "",
+    "@context": "http://iiif.io/api/presentation/2/context.json",
+    "@type": "sc:Manifest",
+    "sequences": [
+        {
+            "canvases": [
+                {
+                    "width": 308,
+                    "related": "",
+                    "@type": "sc:Canvas",
+                    "images": [
+                        {
+                            "@context": "http://iiif.io/api/presentation/2/context.json",
+                            "on": "http://65C0027A-9527-11EF-BD9B-C718AB18FB1B",
+                            "@type": "oa:Annotation",
+                            "motivation": "sc:painting",
+                            "@id": "http://65C0025C-9527-11EF-BD9B-C718AB18FB1B",
+                            "resource": {
+                                "format": "image/jpeg",
+                                "width": 308,
+                                "height": 164,
+                                "service": {
+                                    "@id": "http://10.0.0.200:8182/iiif/3/roseggern%2F0001.jpg",
+                                    "@context": "http://iiif.io/api/image/3/context.json",
+                                    "profile": "level2"
+                                },
+                                "@type": "dctypes:Image"
+                            }
+                        }
+                    ],
+                    "label": "cantaloupe",
+                    "@id": "http://65C00130-9527-11EF-BD9B-C718AB18FB1B",
+                    "height": 164
+                },
+                {
+                    "height": 164,
+                    "@id": "http://65C00298-9527-11EF-BD9B-C718AB18FB1B",
+                    "label": "cantaloupe",
+                    "images": [
+                        {
+                            "@type": "oa:Annotation",
+                            "on": "http://65C002B6-9527-11EF-BD9B-C718AB18FB1B",
+                            "@context": "http://iiif.io/api/presentation/2/context.json",
+                            "resource": {
+                                "width": 308,
+                                "format": "image/jpeg",
+                                "@type": "dctypes:Image",
+                                "service": {
+                                    "@id": "http://10.0.0.200:8182/iiif/3/roseggern%2F0002.jpg",
+                                    "@context": "http://iiif.io/api/image/3/context.json",
+                                    "profile": "level2"
+                                },
+                                "height": 164
+                            },
+                            "@id": "http://65C002A2-9527-11EF-BD9B-C718AB18FB1B",
+                            "motivation": "sc:painting"
+                        }
+                    ],
+                    "@type": "sc:Canvas",
+                    "related": "",
+                    "width": 308
+                }                
+            ],
+            "@id": "http://f617846c-3c25-4fa8-bf18-ab91ebf35c3d",
+            "@type": "sc:Sequence",
+            "label": [
+                {
+                    "@language": "en",
+                    "@value": "Normal Sequence"
+                }
+            ]
+        }
+    ],
+    "label": "/home/mh/cantaloupe/images/roseggern",
+    "license": "https://creativecommons.org/licenses/by/3.0/",
+    "metadata": [],
+    "structures": [],
+    "@id": "http://ddeba432-e420-482e-a8bd-1f828d6d7a3e",
+    "description": [
+        {
+            "@language": "en",
+            "@value": ""
+        }
+    ]
+}

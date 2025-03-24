@@ -27,7 +27,7 @@ $(document).ready(function() {
             data: ajaxData,
         })
         .done(function(data) {
-            console.log('using mirador');            
+            console.log('using mirador opac.js');            
             var volumes_table =`<div class="row" id="mirador" style="width: 800px; height: 600px;"></div>`;
             //var tabs = $('#'+tab_classname+' ul')
             //    .append('<li id="tab_volumes"><a id="vol_label" href="#volumes">Volume</a></li>');

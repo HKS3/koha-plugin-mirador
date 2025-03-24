@@ -1,0 +1,24 @@
+mh@lkeller:~/cantaloupe/cantaloupe-5.0.6$ java -Dcantaloupe.config=cantaloupe.properties -Xmx2g -jar cantaloupe-5.0.6.jar
+
+856$
+2 => IIIF-Manifest
+d => roseggern/manifest.json
+u => 10.0.0.200
+
+kohadev-koha@kohadevbox:koha(main)$ perl ./misc/devel/install_plugins.pl 
+
+DEV_INSTALL=1 KOHA_HOME=/kohadevbox/koha \
+  /usr/bin/plackup -M FindBin --workers 2 --user=kohadev-koha --group=kohadev-koha  -E deployment --socket /var/run/koha/kohadev/plack.sock -s Starman \
+  -R /kohadevbox/koha \
+  -R /kohadevbox/plugins \
+  /etc/koha/plack.psgi
+
+
+   "thumbnail": {
+        "@id": "http://10.0.0.200:8182/iiif/3/roseggern/full/200,/0/default.jpg",
+        "service": {
+            "@context": "http://iiif.io/api/image/2/context.json",
+            "profile": "http://iiif.io/api/image/2/level2.json",
+            "@id": "http://10.0.0.200:8182/iiif/3/roseggern"
+        }
+    }

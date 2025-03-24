@@ -41,8 +41,13 @@ my $html = <<'EOT';
                 transitions: window.location.port === '4488' ?  { create: () => 'none' } : {},
              },
              windows: [{
-                 manifestId: '/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=XBIBX'
-             }]
+                 manifestId: '/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=XBIBX',
+                 // manifestId: 'https://api.irht.cnrs.fr/ark:/63955/fthdrzs3uxab/manifest.json',
+                 thumbnailNavigationPosition: 'far-bottom'
+                }],
+            window: {
+                // defaultView: 'gallery'
+                }            
          });                            
     </script>
   </body>
