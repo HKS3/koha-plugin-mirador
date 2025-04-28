@@ -1,13 +1,10 @@
 # koha-plugin-mirador
 
-<<<<<<< HEAD
 IIIF Server like Cantaloupe
 
 IIIF Viewer Mirador
-=======
-# Usage
+
 in the frameworks you want to use for displaying digital assets you have to enable (ie make them visible in "Editor") 856$2 and 856$d 
->>>>>>> a311d8c (working with thumbnails)
 
 ## Authors and acknowledgment
 HKS3
@@ -17,7 +14,8 @@ office@koha-support.eu
 mark@hofstetter.at
 
 ## License
-For open source projects, say how it is licensed.
+
+DBD
 
 ## Project status
 
