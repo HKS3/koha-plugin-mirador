@@ -29,6 +29,7 @@ use Koha::AuthorisedValues;
 use Data::UUID;
 use File::Slurp;
 use HTTP::Tiny;
+use URI::Encode  qw(uri_encode);
 use Koha::Plugin::HKS3::IIIF qw(create_iiif_manifest);
 use Koha::Logger;
 
@@ -66,8 +67,8 @@ my $config_test = {
 };
 
 my $config_stage = {
-    iiif_server => 'https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/3',
-    manifest_server => 'http://10.0.0.200/mh/manifest',
+    iiif_server => 'https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/2',
+    manifest_server => 'https://lib-t-lx2.stlrg.gv.at/manifest',
     # manifest_dir => '/opt/cantaloupe/manifest',
 };
 
@@ -126,7 +127,8 @@ sub get_manifest {
         my $file = File::Spec->catfile($FindBin::Bin, $filename);
         $return = read_file($file) or die "Could not open '$file': $!";      
     } elsif ($field->subfield('u')) {  
-        my $url = sprintf("%s/%s", $config->{manifest_server}, $field->subfield('d'));
+        my $path = uri_encode($field->subfield('d'));
+        my $url = sprintf("%s/%s", $config->{manifest_server}, $path);
     
         my $http = HTTP::Tiny->new;
         my $response = $http->get($url);
@@ -141,10 +143,6 @@ sub get_manifest {
     return $return;
 }
 
-
-
-
-
 sub get_manifest_from_koha {
     my ($biblionumber) = @_;
     my $biblio = Koha::Biblios->find($biblionumber);
@@ -158,7 +156,8 @@ sub get_manifest_from_koha {
         if ($field->subfield('2') && $data[0]->subfield('2') eq 'IIIF-Manifest')  {
             my $manifest = get_manifest($field);
             $manifest->{label} = $record->field('245')->subfield('a');                                   
-            $manifest->{metadata} = [ { value =>  $record->field('100')->subfield('a') } ];
+            # $manifest->{metadata} = [ { value =>  $record->field('100')->subfield('a') } ];
+            # check if exist
             return $manifest;           
         }
 

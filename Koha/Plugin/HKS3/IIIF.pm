@@ -25,14 +25,15 @@ use Try::Tiny;
 use Template;
 use CAM::PDF;
 use File::Spec;
+use URI::Encode qw(uri_encode uri_decode);
 
 our @EXPORT = qw(create_iiif_manifest);
 
 sub create_iiif_manifest_from_pdf {
     my ($pdf_file, $name, $config, $filename) = @_;    
-    my $pdf = CAM::PDF->new($pdf_file) or die "$pdf_file Cannot open PDF file: $!";    
-    my $num_pages = $pdf->numPages();
     my @images;
+    my $pdf = CAM::PDF->new($pdf_file) or return @images; # die "$pdf_file Cannot open PDF file: $!";    
+    my $num_pages = $pdf->numPages();
     for my $i (1..$pdf->numPages()) {
         push(@images, sprintf("%s;%d", $name, $i));
     }
@@ -50,7 +51,9 @@ sub create_iiif_manifest {
     # IIIF templates should be template toolkit
     my $count = 1;
     for my $d (@{$record_data->{image_data}}) {
-
+        $d = uri_encode($d);
+        # remove double uri encoding - XXX
+        $d =~ s/%252F/%2F/g;
         $canvas_template = {
                 '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
                 '@type' =>  'sc:Canvas',
