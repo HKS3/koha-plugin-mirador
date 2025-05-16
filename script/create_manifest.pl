@@ -15,12 +15,22 @@ use File::Basename;
 use File::Spec;
 use File::Path qw(make_path);
 
-my $config = {
+
+my $config_test = { 
     iiif_server => 'http://10.0.0.200:8182/iiif/2',
     image_dir => '/home/mh/cantaloupe/images',
     manifest_dir => '/var/www/html/mh/manifest',
 
 };
+
+my $config_stage = {
+    iiif_server => 'https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/2',
+    # image_dir => '/mnt/IIF/Repositorium Digitalisate Online (RDO)',
+    image_dir => '/mnt/IIF',
+    manifest_dir => '/opt/cantaloupe/manifest',
+};
+
+my $config = $config_stage;
 
 my $start_dir = $config->{image_dir};
 my $dir_sep = '%2F';
@@ -54,13 +64,13 @@ sub process_directory {
 
     for my $image (@image_files) {    
         my $fpi = $image;    
-		my $filename = basename($image);
+	my $filename = basename($image);
         $image =~ s/^\Q$start_dir\/\E//;                
         $image =~ s/\//$dir_sep/g;
 		
-		printf ("%s \n", $image);
+	printf ("%s \n", $image);
 		
-   		$filename =~ s/\s+/_/g; 
+   	# $filename =~ s/\s+/_/g; 
         if ($image =~ /\.pdf$/i) {
             my @pdfs = Koha::Plugin::HKS3::IIIF::create_iiif_manifest_from_pdf($fpi, $image, $config, $filename);
             store_manifest(\@pdfs, $image, $relative_path, $filename.'.json');
@@ -111,4 +121,4 @@ __END__
 create a perl script which takes a (sub)directory as an input parameter, 
 and creates a IIIF manifest file with all the media files in the directory (sorted lexically), 
 the default iiif parameters are read from a json files (provied via command line) and 
-may be (partly) overrifden with another json files also provided via command line
+may be (partly) overrifden with another json files also provided  ivia command line
