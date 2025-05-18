@@ -72,7 +72,7 @@ my $config_stage = {
     # manifest_dir => '/opt/cantaloupe/manifest',
 };
 
-my $config = $config_stage;
+our $config;
 
 # https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/3/Homeneu.jpg/full/max/0/default.jpg
 
@@ -86,7 +86,9 @@ sub new {
     my $self = $class->SUPER::new($args);
 
     $self->{cgi} = CGI->new();
-
+    $config->{iiif_server}       = $self->retrieve_data('iiif_server');
+    $config->{manifest_server}   = $self->retrieve_data('manifest_server');
+    
     return $self;
 }
 
@@ -98,6 +100,35 @@ sub api_routes {
 
     return $spec;
 }
+
+sub configure {
+    my ( $self, $args ) = @_; 
+    my $cgi = $self->{'cgi'};
+
+    unless ( $cgi->param('save') ) { 
+        my $template = $self->get_template({ file => 'configure.tt' }); 
+
+        ## Grab the values we already have for our settings, if any exist
+        $template->param(
+            iiif_server       => $self->retrieve_data('iiif_server'),    
+            manifest_server   => $self->retrieve_data('manifest_server'),
+        );
+
+        $self->output_html( $template->output() );
+    }   
+    else {
+        $self->store_data(
+            {    
+                iiif_server         => $cgi->param('iiif_server'),
+                manifest_server     => $cgi->param('manifest_server'),
+                last_configured_by => C4::Context->userenv->{'number'},
+            }
+        );
+        $self->go_home();
+    }   
+}
+
+
 
 sub api_namespace {
     my ( $self ) = @_;
@@ -121,6 +152,7 @@ sub handle_iiif_manifest {
 # either get manifest from url or from file
 sub get_manifest {
     my $field = shift;
+
     my $return;
     if ($field->subfield('d') && ! $field->subfield('u') ) {
         my $filename = $field->subfield('d');           

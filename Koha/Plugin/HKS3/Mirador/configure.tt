@@ -1,0 +1,46 @@
+[% INCLUDE 'doc-head-open.inc' %]
+ <title>Libelle Plugin: Configuration</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> Configuration</div>
+
+<div id="doc3">
+    <img src="[% PLUGIN_PATH %]/logo-hks3-transparent.png" />
+    <h3>Configuration</h3>
+
+    <!-- Notice our form here has no 'action', this is good, it means that our forms will always get passed back to 'plugins/run.pl'. You could hard code it instead if you prefer -->
+    <form method="get">
+        <!-- Always pass these two parameters so the plugin system knows what to execute! -->
+        <input type="hidden" name="class" value="[% CLASS %]"/>
+        <input type="hidden" name="method" value="[% METHOD %]"/>
+        <p>
+        <label for="iiif_server">IIIF Server: </label>
+        <input type="text" name="iiif_server" value="[% iiif_server %]" />
+        </p>
+        <p>
+        <label for="manifest_server">Manifest Server: </label>
+        <input type="text" name="manifest_server" value="[% manifest_server %]" />
+        </p>
+        
+        
+        <input type="hidden" name="save" value="1" />
+
+        <input type="submit" value="Save configuration" />
+    </form>
+
+    <hr/>
+
+    <p>
+        <h5>Upgrade status</h5>
+        [% IF last_upgraded %]
+            Plugin was last upgraded on this system on [% last_upgraded | $KohaDates with_hours => 1 %]
+        [% ELSE %]
+            Plugin has never been upgraded.
+        [% END %]
+    </p>
+
+[% INCLUDE 'intranet-bottom.inc' %]
