@@ -154,11 +154,11 @@ sub get_manifest {
     my $field = shift;
 
     my $return;
-    if ($field->subfield('d') && ! $field->subfield('u') ) {
+    if ($field->subfield('d') && ! $field->subfield('a') ) {
         my $filename = $field->subfield('d');           
         my $file = File::Spec->catfile($FindBin::Bin, $filename);
         $return = read_file($file) or die "Could not open '$file': $!";      
-    } elsif ($field->subfield('u')) {  
+    } elsif ($field->subfield('a')) {  
         my $path = uri_encode($field->subfield('d'));
         my $url = sprintf("%s/%s", $config->{manifest_server}, $path);
     
@@ -184,8 +184,11 @@ sub get_manifest_from_koha {
     
     return undef unless @data;
     foreach my $field (@data) {
-    #my $field = $data[0];
-        if ($field->subfield('2') && $data[0]->subfield('2') eq 'IIIF-Manifest')  {
+        next unless $field->subfield('2');
+        next unless ($field->subfield('2') eq 'IIIF' || 
+                $field->subfield('2') eq 'IIIF-Manifest');
+        
+        if ($field->subfield('2') && $field->subfield('2') eq 'IIIF-Manifest')  {
             my $manifest = get_manifest($field);
             $manifest->{label} = $record->field('245')->subfield('a');                                   
             # $manifest->{metadata} = [ { value =>  $record->field('100')->subfield('a') } ];
@@ -194,7 +197,7 @@ sub get_manifest_from_koha {
         }
 
         # single file handling may not be usefull/necessary at all
-        return undef unless $field->subfield('2') && $field->subfield('2') eq 'IIIF';
+        
         
         warn("found IIIF");
         my @f856 = map { $_->subfield('d') } $field;
@@ -202,46 +205,46 @@ sub get_manifest_from_koha {
             image_data => \@f856,        
             label => $record->field('245')->subfield('a'),
         };
-    return undef unless $data[0]->subfield('2') &&  $data[0]->subfield('2') eq 'IIIF';
-    my $ug = Data::UUID->new;
+        # next unless $data[0]->subfield('2') &&  $data[0]->subfield('2') eq 'IIIF';
+        my $ug = Data::UUID->new;
 
 
- # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg/full/full/0/default.jpg',
- # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg',
-    my @canvases;
-    for my $d (@data) {
-        my $image_path = $d->subfield('d');            
-        my $canvas_template = {
-                '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                '@type' =>  'sc:Canvas',
-                'label' =>  'cantaloupe',
-                'height' =>  164,
-                'width' =>  308,
-                'images' =>  [
-                    {
-                    '@context' =>  'http://iiif.io/api/presentation/2/context.json',
+    # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg/full/full/0/default.jpg',
+    # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg',
+        my @canvases;
+        for my $d (@data) {
+            my $image_path = $d->subfield('d');            
+            my $canvas_template = {
                     '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                    '@type' =>  'oa:Annotation',
-                    'motivation' =>  'sc:painting',
-                    'resource' =>  {
-                        # '@id' =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{server}, $image_path),
-                        '@type' =>  'dctypes:Image',
-                        # 'format' =>  'image/jpeg',
-                        'service' =>  {
-                        '@context' =>  'http://iiif.io/api/image/3/context.json',
-                        '@id' =>  sprintf('%s/%s', $config->{server}, $image_path),
-                        'profile' =>  'level2'
+                    '@type' =>  'sc:Canvas',
+                    'label' =>  'cantaloupe',
+                    'height' =>  164,
+                    'width' =>  308,
+                    'images' =>  [
+                        {
+                        '@context' =>  'http://iiif.io/api/presentation/2/context.json',
+                        '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
+                        '@type' =>  'oa:Annotation',
+                        'motivation' =>  'sc:painting',
+                        'resource' =>  {
+                            # '@id' =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{server}, $image_path),
+                            '@type' =>  'dctypes:Image',
+                            # 'format' =>  'image/jpeg',
+                            'service' =>  {
+                            '@context' =>  'http://iiif.io/api/image/3/context.json',
+                            '@id' =>  sprintf('%s/%s', $config->{server}, $image_path),
+                            'profile' =>  'level2'
+                            },
+                            'height' =>  164,
+                            'width' =>  308
                         },
-                        'height' =>  164,
-                        'width' =>  308
-                    },
-                    'on' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                    }
-                ],
-                'related' =>  ''
-        };
-        return Koha::Plugin::HKS3::IIIF::create_iiif_manifest($record_data, $config);
-    }
+                        'on' =>  sprintf('http://%s', $ug->to_string($ug->create())),
+                        }
+                    ],
+                    'related' =>  ''
+            };
+            return Koha::Plugin::HKS3::IIIF::create_iiif_manifest($record_data, $config);
+        }
     }
 }    
     
