@@ -60,21 +60,7 @@ our $metadata = {
 
 our @EXPORT    = qw(get_manifest_from_koha);
 
-my $config_test = {
-    iiif_server => 'http://10.0.0.200:8182/iiif/2',
-    manifest_server => 'http://10.0.0.200/mh/manifest',
-    datadir => '',
-};
-
-my $config_stage = {
-    iiif_server => 'https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/2',
-    manifest_server => 'https://lib-t-lx2.stlrg.gv.at/manifest',
-    # manifest_dir => '/opt/cantaloupe/manifest',
-};
-
-our $config;
-
-# https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/3/Homeneu.jpg/full/max/0/default.jpg
+my $config; # needs to be global so that the static get_manifest_from_koha() can read it
 
 sub new {
     my ( $class, $args ) = @_;
@@ -86,10 +72,16 @@ sub new {
     my $self = $class->SUPER::new($args);
 
     $self->{cgi} = CGI->new();
-    $config->{iiif_server}       = $self->retrieve_data('iiif_server');
-    $config->{manifest_server}   = $self->retrieve_data('manifest_server');
+    $self->load_config();
     
     return $self;
+}
+
+sub load_config {
+    my $self = shift;
+
+    $config->{iiif_server}     = $self->retrieve_data('iiif_server');
+    $config->{manifest_server} = $self->retrieve_data('manifest_server');
 }
 
 sub api_routes {
@@ -118,12 +110,14 @@ sub configure {
     }   
     else {
         $self->store_data(
-            {    
+            {
                 iiif_server         => $cgi->param('iiif_server'),
                 manifest_server     => $cgi->param('manifest_server'),
                 last_configured_by => C4::Context->userenv->{'number'},
             }
         );
+        $self->load_config();
+
         $self->go_home();
     }   
 }
@@ -155,14 +149,17 @@ sub get_manifest {
 
     my $return;
     if ($field->subfield('d') && ! $field->subfield('a') ) {
+        # path, no hostname
         my $filename = $field->subfield('d');           
         my $file = File::Spec->catfile($FindBin::Bin, $filename);
         $return = read_file($file) or die "Could not open '$file': $!";      
     } elsif ($field->subfield('a')) {  
+        # hostname, possibly no path?
         my $path = uri_encode($field->subfield('d'));
         my $url = sprintf("%s/%s", $config->{manifest_server}, $path);
     
         my $http = HTTP::Tiny->new;
+        warn "Will query $url for manifest";
         my $response = $http->get($url);
         
 
@@ -183,69 +180,29 @@ sub get_manifest_from_koha {
     my @data = $record->field('856');
     
     return undef unless @data;
-    foreach my $field (@data) {
-        next unless $field->subfield('2');
-        next unless ($field->subfield('2') eq 'IIIF' || 
-                $field->subfield('2') eq 'IIIF-Manifest');
-        
-        if ($field->subfield('2') && $field->subfield('2') eq 'IIIF-Manifest')  {
-            my $manifest = get_manifest($field);
-            $manifest->{label} = $record->field('245')->subfield('a');                                   
-            # $manifest->{metadata} = [ { value =>  $record->field('100')->subfield('a') } ];
-            # check if exist
-            return $manifest;           
-        }
 
-        # single file handling may not be usefull/necessary at all
-        
-        
-        warn("found IIIF");
-        my @f856 = map { $_->subfield('d') } $field;
-        my $record_data = {
-            image_data => \@f856,        
-            label => $record->field('245')->subfield('a'),
-        };
-        # next unless $data[0]->subfield('2') &&  $data[0]->subfield('2') eq 'IIIF';
-        my $ug = Data::UUID->new;
+    my @manifest_fields = grep { $_->subfield('2') eq 'IIIF-Manifest' } @data;
+    if (@manifest_fields) {
+        # Backcompat with the old code: only use the first field. Later figure out how to handle this sensibly.
+        my $field = $manifest_fields[0];
 
-
-    # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg/full/full/0/default.jpg',
-    # '@id' =>  'http://10.0.0.200:8182/iiif/3/0001.jpg',
-        my @canvases;
-        for my $d (@data) {
-            my $image_path = $d->subfield('d');            
-            my $canvas_template = {
-                    '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                    '@type' =>  'sc:Canvas',
-                    'label' =>  'cantaloupe',
-                    'height' =>  164,
-                    'width' =>  308,
-                    'images' =>  [
-                        {
-                        '@context' =>  'http://iiif.io/api/presentation/2/context.json',
-                        '@id' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                        '@type' =>  'oa:Annotation',
-                        'motivation' =>  'sc:painting',
-                        'resource' =>  {
-                            # '@id' =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{server}, $image_path),
-                            '@type' =>  'dctypes:Image',
-                            # 'format' =>  'image/jpeg',
-                            'service' =>  {
-                            '@context' =>  'http://iiif.io/api/image/3/context.json',
-                            '@id' =>  sprintf('%s/%s', $config->{server}, $image_path),
-                            'profile' =>  'level2'
-                            },
-                            'height' =>  164,
-                            'width' =>  308
-                        },
-                        'on' =>  sprintf('http://%s', $ug->to_string($ug->create())),
-                        }
-                    ],
-                    'related' =>  ''
-            };
-            return Koha::Plugin::HKS3::IIIF::create_iiif_manifest($record_data, $config);
-        }
+        warn "Using preconfigured manifest for $biblionumber";
+        my $manifest = get_manifest($field);
+        $manifest->{label} = $record->field('245')->subfield('a');                                   
+        # $manifest->{metadata} = [ { value =>  $record->field('100')->subfield('a') } ];
+        # check if exist
+        return $manifest;
     }
+
+    warn "Generating manifest for $biblionumber";
+    my @iiif_fields = grep { $_->subfield('2') eq 'IIIF' } @data;
+
+    my @paths = map { $_->subfield('d') } @iiif_fields;
+
+    return Koha::Plugin::HKS3::IIIF::create_iiif_manifest({
+        image_data => \@paths,
+        label => $record->field('245')->subfield('a'),
+    }, $config);
 }    
     
 
