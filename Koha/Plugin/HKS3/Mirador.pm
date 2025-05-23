@@ -82,6 +82,21 @@ sub load_config {
 
     $config->{iiif_server}     = $self->retrieve_data('iiif_server');
     $config->{manifest_server} = $self->retrieve_data('manifest_server');
+
+    $config->{fields} = {
+        title         => ['245', 'a'],
+        personal_name => ['100', 'a'],
+        type          => ['942', 'c'],
+        place_of_publications => ['264', 'a'],
+        date_issued => ['264', 'c' ],
+        extent      => ['300', 'a' ],
+        signature   => ['952', 'o' ],
+        language => ['041', 'a'],
+    };
+
+    $config->{field_defaults} = {
+        language => 'ger',
+    };
 }
 
 sub api_routes {
@@ -181,30 +196,42 @@ sub get_manifest_from_koha {
     
     return undef unless @data;
 
-    my @manifest_fields = grep { $_->subfield('2') eq 'IIIF-Manifest' } @data;
+    my $get_subfield_for = sub {
+        my $key = shift;
+        my ($field, $subfield) = $config->{fields}{$key}->@*;
+        my $marc_field = $record->field($field);
+        return $marc_field ? $marc_field->subfield($subfield) : undef;
+    };
+
+    my %metadata;
+    for my $key (keys $config->{fields}->%*) {
+        $metadata{$key} = $get_subfield_for->($key) // $config->{field_defaults}{$key};
+    }
+
+    my @manifest_fields = grep { ($_->subfield('2') // '') eq 'IIIF-Manifest' } @data;
     if (@manifest_fields) {
         # Backcompat with the old code: only use the first field. Later figure out how to handle this sensibly.
         my $field = $manifest_fields[0];
 
         warn "Using preconfigured manifest for $biblionumber";
         my $manifest = get_manifest($field);
-        $manifest->{label} = $record->field('245')->subfield('a');                                   
+        $manifest->{label} = $metadata{label};
         # $manifest->{metadata} = [ { value =>  $record->field('100')->subfield('a') } ];
         # check if exist
         return $manifest;
     }
 
     warn "Generating manifest for $biblionumber";
-    my @iiif_fields = grep { $_->subfield('2') eq 'IIIF' } @data;
+    my @iiif_fields = grep { ($_->subfield('2') // '') eq 'IIIF' } @data;
 
     my @paths = map { $_->subfield('d') } @iiif_fields;
 
     return Koha::Plugin::HKS3::IIIF::create_iiif_manifest({
+        %metadata,
         image_data => \@paths,
-        label => $record->field('245')->subfield('a'),
     }, $config);
 }    
-    
+
 
 sub opac_head {
     my ( $self ) = @_;

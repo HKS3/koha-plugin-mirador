@@ -17,14 +17,10 @@ package Koha::Plugin::HKS3::IIIF;
 
 use Modern::Perl;
 
-use Cwd qw(abs_path);
 use Data::UUID;
-use File::Slurp;
 use HTTP::Tiny;
-use Try::Tiny;
-use Template;
+use JSON;
 use CAM::PDF;
-use File::Spec;
 use URI::Encode qw(uri_encode uri_decode);
 
 our @EXPORT = qw(create_iiif_manifest);
@@ -40,6 +36,7 @@ sub create_iiif_manifest_from_pdf {
     return @images;
 }
 
+my %cache;
 
 sub create_iiif_manifest {
     my ($record_data, $config, $canvas_template, $manifest_template) = @_;
@@ -53,12 +50,28 @@ sub create_iiif_manifest {
         $d = uri_encode($d);
         # remove double uri encoding - XXX
         $d =~ s/%252F/%2F/g;
+
+        my $image_info = $cache{$d};
+        unless ($image_info) {
+            my $http = HTTP::Tiny->new;
+            warn "Querying image info for $d";
+            my $response = $http->get(sprintf('%s/%s/info.json', $config->{iiif_server}, $d));
+
+            if (!$response) {
+                warn "Failed to obtain info.json for $d, skipping it in the manifest";
+                next;
+            }
+
+            my $info = decode_json $response->{content};
+            $image_info = $cache{$d} = $info;
+        }
+
         $canvas_template = {
                 '@id'    => $generate_id->(),
                 '@type'  => 'sc:Canvas',
                 'label'  => sprintf("# %s", $count),
-                'height' => 2805,
-                'width'  => 1760,
+                'height' => $image_info->{height},
+                'width'  => $image_info->{width},
                 'images' => [{
                     '@id'        =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),
                     '@context'   => 'http://iiif.io/api/presentation/2/context.json',
@@ -84,11 +97,79 @@ sub create_iiif_manifest {
         $count++;
     }
 
+    my %labels = (
+        title => {
+            en => 'Title',
+            ger => 'Titel',
+        },
+        personal_name => {
+            en => 'Personal Name',
+            ger => 'Personenname',
+        },
+        type => {
+            en => 'Type',
+            ger => 'Typ',
+        },
+        place_of_publications => {
+            en => 'Place of Publications',
+            ger => 'Erscheinungsort',
+        },
+        date_issued => {
+            en => 'Date Issued',
+            ger => 'Erscheinungsdatum',
+        },
+        extent => {
+            en => 'Extent',
+            ger => 'Umfang',
+        },
+        signature => {
+            en => 'Signature',
+            ger => 'Signatur',
+        },
+        language => {
+            en => 'Languages',
+            ger => 'Sprachen',
+        },
+        # {
+        #     'label' => [
+        #         { '@value' => 'Id', '@language' => 'en' },
+        #         { '@value' => 'Id', '@language' => 'ger' }
+        #     ],
+        #     'value' => 'wrz17030823'
+        #     # Dürfte sich um die Quelle der Dateien handeln, also bei uns der Ordnername ??? -> dann wäre es z.B. KLZ-2020-10-25 ????
+        # },
+        # {
+        #     'label' => [
+        #         { '@value' => 'Disseminator', '@language' => 'en' },
+        #         { '@value' => 'Anbieter', '@language' => 'ger' }
+        #     ],
+        #     'value' => 'RaraBib'
+        # },
+    );
+
+    my @metadata;
+    for my $key (%labels) {
+        next unless $record_data->{$key};
+        push @metadata, {
+            'label' => [
+                {
+                    '@value' => $labels{$key}{en},
+                    '@language' => 'en'
+                },
+                {
+                    '@value' => $labels{$key}{ger},
+                    '@language' => 'ger'
+                }
+            ],
+            'value' => $record_data->{$key},
+        },
+    }
+
     $manifest_template = {
         '@context'  => 'http://iiif.io/api/presentation/2/context.json',
         '@id'       => $generate_id->(),
         '@type'     => 'sc:Manifest',
-        'label'     => $record_data->{label},
+        'label'     => $record_data->{title},
         'thumbnail' => {
             '@id' => "http://10.0.0.200:8182/iiif/2/roseggern/full/200,/0/default.jpg",
             'service' => {
@@ -97,167 +178,35 @@ sub create_iiif_manifest {
                 '@id'      => "http://10.0.0.200:8182/iiif/2/roseggern"
             }
         },
-        'metadata' => [
+        'metadata' => \@metadata,
+        'description' => 'Wiener Zeitung 1703-08-23',  ## ???
+        'viewingDirection' => 'left-to-right',
+         # 'viewingHint' => 'paged',
+        'license' => 'http://creativecommons.org/publicdomain/mark/1.0/', ### muss noch besprochen werden!!!!!
+        'attribution' => [
             {
-                'label' => [
-                    {
-                        '@value' => 'Id',
-                        '@language' => 'en'
-                    },
-                    {
-                        '@value' => 'Id',
-                        '@language' => 'ger'
-                    }
-                ],
-                'value' => 'wrz17030823'		
-                # Dürfte sich um die Quelle der Dateien handeln, also bei uns der Ordnername ??? -> dann wäre es z.B. KLZ-2020-10-25 ????
+                '@value' => 'Austrian National Library',	## XXX	Fixwert: Styrian State Library
+                '@language' => 'en'
             },
             {
-                'label' => [
-                    {
-                        '@value' => 'Title',
-                        '@language' => 'en'
-                    },
-                    {
-                        '@value' => 'Titel',
-                        '@language' => 'ger'
-                    }
-                ],
-                'value' => 'Wiener Zeitung'	#XXX		245a
-            },
-            {
-                'label' => [			## XXX zusätzliche Metadaten
-                    {
-                        '@value' => 'Personal Name',
-                        '@language' => 'en'
-                    },
-                    {
-                        '@value' => 'Personenname',
-                        '@language' => 'ger'
-                    }
-                ],
-                'value' => 'WERT'	        #XXX		100a
-            },
-            {
-                'label' => [
-                    {
-                        '@value' => 'Type',
-                        '@language' => 'en'
-                    },
-                    {
-                        '@value' => 'Typ',
-                        '@language' => 'ger'
-                    }
-                ],
-                'value' => 'newspaper'		#XXX	942c
-            },
-            {
-                'label' => [
-                    {
-                        '@value' => 'Place of Publications',
-                        '@language' => 'en'
-                    },
-                    {
-                        '@value' => 'Erscheinungsort',
-                        '@language' => 'ger'
-                    }
-                ],
-                'value' => 'XXX 264a'
-            },
-            {
-                'label' => [
-                    {
-                        '@value' => 'Date Issued',
-                        '@language' => 'en'
-                    },
-                    {
-                        '@value' => 'Erscheinungsdatum',
-                        '@language' => 'ger'
-                    }
-                ],
-                'value' => '1703-08-23'			#XXX 264c
-            },
-            {
-                'label' => [			## zusätzliche Metadaten
-                        {
-                            '@value' => 'Extent ',
-                            '@language' => 'en'
-                        },
-                        {
-                            '@value' => 'Umfang',
-                            '@language' => 'ger'
-                        }
-                    ],
-                    'value' => 'WERT '	## XXX		300a
-            },
-            {
-                'label' => [			## zusätzliche Metadaten
-                    {
-                        '@value' => 'Signatur ',
-                        '@language' => 'en'
-                    },
-                    {
-                        '@value' => 'Signatur',
-                        '@language' => 'ger'
-                    }
-                ],
-                'value' => 'WERT '	## XXX		952o
-            },            
-            {
-                'label' => [
-                    {
-                        '@value' => 'Disseminator',
-                        '@language' => 'en'
-                    },
-                    {
-                        '@value' => 'Anbieter',
-                        '@language' => 'ger'
-                    }
-                ],
-                'value' => 'RaraBib'
-            },
-            {
-                'label' => [
-                    {
-                        '@value' => 'Languages',
-                        '@language' => 'en'
-                    },
-                    {
-                        '@value' => 'Sprachen',
-                        '@language' => 'ger'
-                    }
-                ],
-                'value' => 'ger'		##			041a – aber ansonsten Fixert: ger
+                '@value' => 'Österreichische Nationalbibliothek',	# XXX Fixwert: Steiermärkische Landesbibliothek
+                '@language' => 'ger'
             }
-      ],
-      'description' => 'Wiener Zeitung 1703-08-23',  ## ???
-      'viewingDirection' => 'left-to-right',
-       # 'viewingHint' => 'paged',
-      'license' => 'http://creativecommons.org/publicdomain/mark/1.0/', ### muss noch besprochen werden!!!!!
-      'attribution' => [
-          {
-              '@value' => 'Austrian National Library',	## XXX	Fixwert: Styrian State Library
-              '@language' => 'en'
-          },
-          {
-              '@value' => 'Österreichische Nationalbibliothek',	# XXX Fixwert: Steiermärkische Landesbibliothek
-              '@language' => 'ger'
-          }
-      ],
-      'logo' => 'https://iiif.onb.ac.at/logo/',  ### XXX wird nachgeliefert der Link zu unserem LOGO
-      'seeAlso' => [ ### XXX müssen wir noch besprechen, bzw. erarbeiten
-        {
-          '@id' => 'http://anno.onb.ac.at/cgi-content/anno_pdf.pl?aid=wrz&datum=17030823',
-          'format' => 'application/pdf'
-        },
-        {
-          '@id' => 'http://anno.onb.ac.at/cgi-content/anno?aid=wrz&datum=17030823',
-          'format' => 'text/html'
-        },
-        {
-          '@id' => 'http://data.onb.ac.at/ANNO/wrz17030823.rdf',
-          'format' => 'application/rdf+xml'
-        }
+        ],
+        'logo' => 'https://iiif.onb.ac.at/logo/',  ### XXX wird nachgeliefert der Link zu unserem LOGO
+        'seeAlso' => [ ### XXX müssen wir noch besprechen, bzw. erarbeiten
+            {
+              '@id' => 'http://anno.onb.ac.at/cgi-content/anno_pdf.pl?aid=wrz&datum=17030823',
+              'format' => 'application/pdf'
+            },
+            {
+              '@id' => 'http://anno.onb.ac.at/cgi-content/anno?aid=wrz&datum=17030823',
+              'format' => 'text/html'
+            },
+            {
+              '@id' => 'http://data.onb.ac.at/ANNO/wrz17030823.rdf',
+              'format' => 'application/rdf+xml'
+            }
         ],
         'description' =>  [
             {
