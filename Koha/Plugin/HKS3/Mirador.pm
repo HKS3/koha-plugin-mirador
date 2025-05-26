@@ -190,11 +190,10 @@ sub get_manifest {
 sub get_manifest_from_koha {
     my ($biblionumber) = @_;
     my $biblio = Koha::Biblios->find($biblionumber);
-    my $record       = $biblio->metadata->record;
+    my $record = $biblio->metadata->record;
     
     my @data = $record->field('856');
-    
-    return undef unless @data;
+    return unless @data;
 
     my $get_subfield_for = sub {
         my $key = shift;
@@ -236,13 +235,17 @@ sub get_manifest_from_koha {
 sub opac_head {
     my ( $self ) = @_;
 
+    return unless CGI->new->script_name eq '/opac/opac-detail.pl';
+
     return q|<script src="https://unpkg.com/mirador@latest/dist/mirador.min.js" crossorigin=""></script>|;
 }
 
 
 sub opac_js {
     my ( $self ) = @_;
-    # XXX should check here if there is something to show
+
+    return unless CGI->new->script_name eq '/opac/opac-detail.pl';
+
     my $payload = $self->mbf_read('opac.js');
     return "<script> $payload </script>";
 }
