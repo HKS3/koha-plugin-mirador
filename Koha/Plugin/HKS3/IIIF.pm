@@ -20,6 +20,7 @@ use Modern::Perl;
 use Data::UUID;
 use HTTP::Tiny;
 use JSON;
+use Koha::Caches;
 use CAM::PDF;
 use URI::Encode qw(uri_encode uri_decode);
 
@@ -36,13 +37,13 @@ sub create_iiif_manifest_from_pdf {
     return @images;
 }
 
-my %cache;
-
 sub create_iiif_manifest {
     my ($record_data, $config, $canvas_template, $manifest_template) = @_;
     
     my $ug = Data::UUID->new;
     my $generate_id = sub { sprintf('http://%s', $ug->to_string($ug->create())) };
+
+    my $cache = Koha::Caches->get_instance(__PACKAGE__);
     
     my @canvases;
     my $count = 1;
@@ -51,7 +52,7 @@ sub create_iiif_manifest {
         # remove double uri encoding - XXX
         $d =~ s/%252F/%2F/g;
 
-        my $image_info = $cache{$d};
+        my $image_info = $cache->get_from_cache($d);
         unless ($image_info) {
             my $http = HTTP::Tiny->new;
             warn "Querying image info for $d";
@@ -62,8 +63,8 @@ sub create_iiif_manifest {
                 next;
             }
 
-            my $info = decode_json $response->{content};
-            $image_info = $cache{$d} = $info;
+            $image_info = decode_json $response->{content};
+            $cache->set_in_cache($d, $image_info);
         }
 
         $canvas_template = {
