@@ -180,20 +180,17 @@ sub create_iiif_manifest {
             }
         },
         'metadata' => \@metadata,
-        'description' => 'Wiener Zeitung 1703-08-23',  ## ???
+        #'description' => 'Wiener Zeitung 1703-08-23',  ## ???
+        #'description' =>  [
+        #    {
+        #        '@value' =>  '',
+        #        '@language' =>  'en'
+        #    }
+        #],
         'viewingDirection' => 'left-to-right',
          # 'viewingHint' => 'paged',
         'license' => 'http://creativecommons.org/publicdomain/mark/1.0/', ### muss noch besprochen werden!!!!!
-        'attribution' => [
-            {
-                '@value' => 'Austrian National Library',	## XXX	Fixwert: Styrian State Library
-                '@language' => 'en'
-            },
-            {
-                '@value' => 'Österreichische Nationalbibliothek',	# XXX Fixwert: Steiermärkische Landesbibliothek
-                '@language' => 'ger'
-            }
-        ],
+        'attribution' => $config->{attribution},
         'logo' => '/api/v1/contrib/hks3_mirador/static/hks3-logo.png',
         'seeAlso' => [ ### XXX müssen wir noch besprechen, bzw. erarbeiten
             {
@@ -209,14 +206,7 @@ sub create_iiif_manifest {
               'format' => 'application/rdf+xml'
             }
         ],
-        'description' =>  [
-            {
-                '@value' =>  '',
-                '@language' =>  'en'
-            }
-        ],
         'license' =>  'https://creativecommons.org/licenses/by/3.0/',
-        'attribution' =>  '',
         'sequences' => [
             {
             '@id' => 'http://f617846c-3c25-4fa8-bf18-ab91ebf35c3d',

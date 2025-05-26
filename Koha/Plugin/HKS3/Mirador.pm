@@ -81,6 +81,18 @@ sub load_config {
     $config->{field_defaults} = {
         language => 'ger',
     };
+
+    # TODO should be validated against JSON schema, as it may blow up the manifest if in the wrong format
+    $config->{attribution} = [
+        {
+            '@value' => 'Austrian National Library',
+            '@language' => 'en'
+        },
+        {
+            '@value' => 'Österreichische Nationalbibliothek',
+            '@language' => 'ger'
+        }
+    ];
 }
 
 sub api_routes {
