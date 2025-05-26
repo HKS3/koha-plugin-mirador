@@ -127,6 +127,15 @@ sub api_namespace {
     return 'hks3_mirador';
 }
 
+sub static_routes {
+    my ( $self, $args ) = @_;
+
+    my $spec_str = $self->mbf_read('static.json');
+    my $spec     = decode_json($spec_str);
+
+    return $spec;
+}
+
 # either get manifest from url or from file
 sub get_manifest {
     my $field = shift;

@@ -194,7 +194,7 @@ sub create_iiif_manifest {
                 '@language' => 'ger'
             }
         ],
-        'logo' => 'https://iiif.onb.ac.at/logo/',  ### XXX wird nachgeliefert der Link zu unserem LOGO
+        'logo' => '/api/v1/contrib/hks3_mirador/static/hks3-logo.png',
         'seeAlso' => [ ### XXX müssen wir noch besprechen, bzw. erarbeiten
             {
               '@id' => 'http://anno.onb.ac.at/cgi-content/anno_pdf.pl?aid=wrz&datum=17030823',

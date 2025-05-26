@@ -1,0 +1,17 @@
+{
+    "/hks3-logo.png": {
+        "get": {
+            "x-mojo-to": "Static#get",
+            "tags": [ "pluginStatic" ],
+            "operationId": "GetHKS3Logo",
+            "responses": {
+                "200": {
+                    "description": "HKS3 logo",
+                    "schema": {
+                      "type": "file"
+                    }
+                }
+            }
+        }
+    }
+}
