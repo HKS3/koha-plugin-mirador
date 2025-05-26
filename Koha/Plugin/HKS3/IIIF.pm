@@ -68,31 +68,31 @@ sub create_iiif_manifest {
         }
 
         $canvas_template = {
-                '@id'    => $generate_id->(),
-                '@type'  => 'sc:Canvas',
-                'label'  => sprintf("# %s", $count),
-                'height' => $image_info->{height},
-                'width'  => $image_info->{width},
-                'images' => [{
-                    '@id'        =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),
-                    '@context'   => 'http://iiif.io/api/presentation/2/context.json',
-                    # '@type'    => 'oa:Annotation',
-                    'motivation' => 'sc:painting',
-                    'resource'   =>  {
-                        '@id'     => sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),
-                        '@type'   => 'dctypes:Image',
-                        'format'  => 'image/jpeg',
-                        'height'  => 2805,
-                        'width'   => 1760,
-                        'service' => {
-                            '@context' => 'http://iiif.io/api/image/3/context.json',
-                            '@id'      => sprintf('%s/%s', $config->{iiif_server}, $d),
-                            'profile'  => 'level2'
-                        },
+            '@id'    => $generate_id->(),
+            '@type'  => 'sc:Canvas',
+            'label'  => sprintf("# %s", $count),
+            'height' => $image_info->{height},
+            'width'  => $image_info->{width},
+            'images' => [{
+                '@id'        =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),
+                '@context'   => 'http://iiif.io/api/presentation/2/context.json',
+                # '@type'    => 'oa:Annotation',
+                'motivation' => 'sc:painting',
+                'resource'   =>  {
+                    '@id'     => sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),
+                    '@type'   => 'dctypes:Image',
+                    'format'  => 'image/jpeg',
+                    'height'  => 2805,
+                    'width'   => 1760,
+                    'service' => {
+                        '@context' => 'http://iiif.io/api/image/3/context.json',
+                        '@id'      => sprintf('%s/%s', $config->{iiif_server}, $d),
+                        'profile'  => 'level2'
                     },
-                    'on' => $generate_id->(),
-                }],
-                'related' => ''
+                },
+                'on' => $generate_id->(),
+            }],
+            'related' => ''
         };
         push (@canvases, $canvas_template);
         $count++;
