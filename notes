@@ -3,7 +3,7 @@ mh@lkeller:~/cantaloupe/cantaloupe-5.0.6$ java -Dcantaloupe.config=cantaloupe.pr
 856$
 2 => IIIF-Manifest
 d => roseggern/manifest.json
-u => 10.0.0.200
+a => 10.0.0.200
 
 kohadev-koha@kohadevbox:koha(main)$ perl ./misc/devel/install_plugins.pl 
 
@@ -22,3 +22,16 @@ DEV_INSTALL=1 KOHA_HOME=/kohadevbox/koha \
             "@id": "http://10.0.0.200:8182/iiif/3/roseggern"
         }
     }
+
+ 63 my $config_test = {
+ 64     iiif_server => 'http://10.0.0.200:8182/iiif/2',
+ 65     manifest_server => 'http://10.0.0.200/mh/manifest',
+ 66     datadir => '',
+ 67 };
+ 68 
+ 69 my $config_stage = {
+ 70     iiif_server => 'https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/2',
+ 71     manifest_server => 'https://lib-t-lx2.stlrg.gv.at/manifest',
+ 72     # manifest_dir => '/opt/cantaloupe/manifest',
+ 73 };
+

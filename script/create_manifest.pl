@@ -15,22 +15,15 @@ use File::Basename;
 use File::Spec;
 use File::Path qw(make_path);
 
+use Getopt::Long qw( GetOptions );
 
-my $config_test = { 
-    iiif_server => 'http://10.0.0.200:8182/iiif/2',
-    image_dir => '/home/mh/cantaloupe/images',
-    manifest_dir => '/var/www/html/mh/manifest',
+my $config = {}; 
 
-};
-
-my $config_stage = {
-    iiif_server => 'https://lib-t-lx2.stlrg.gv.at/cantaloupe/iiif/2',
-    # image_dir => '/mnt/IIF/Repositorium Digitalisate Online (RDO)',
-    image_dir => '/mnt/IIF',
-    manifest_dir => '/opt/cantaloupe/manifest',
-};
-
-my $config = $config_stage;
+GetOptions(
+    'iiif_server:s'   => \$config->{iiif_server},
+    'image_dir:s'     => \$config->{image_dir},
+    'manifest_dir:s'  => \$config->{manifest_dir},
+) or die "Error in command line arguments\n";
 
 my $start_dir = $config->{image_dir};
 my $dir_sep = '%2F';
