@@ -7,7 +7,7 @@ With this plugin you are able to display digital assets directly within the Koha
 # Prerequisites
 
 * Koha, with this plugin installed, with shell access
-* (IIIF Server)[https://iiif.io/get-started/image-servers/] like [Cantaloupe](https://cantaloupe-project.github.io/)
+* [IIIF Server](https://iiif.io/get-started/image-servers/) like [Cantaloupe](https://cantaloupe-project.github.io/)
 * a web readable folder from where the (automatically) createted manifests are server
 
 # Example
