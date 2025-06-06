@@ -1,6 +1,7 @@
 sudo cpanm CAM::PDF # or dep package
+sudo cpanm URI/Encode.pm
 
-kohadev-koha@kohadevbox:koha(main)$ perl ./misc/devel/install_plugins.pl
+perl ./misc/devel/install_plugins.pl
 
 
 
