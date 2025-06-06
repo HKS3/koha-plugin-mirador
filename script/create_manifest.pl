@@ -10,7 +10,7 @@ use File::Slurp;
 use Data::Dumper;
 use Getopt::Long;
 use Path::Tiny;
-use Koha::Plugin::HKS3::IIIF qw(create_iiif_manifest);
+use Koha::Plugin::HKS3::IIIF;
 use File::Basename;
 use File::Spec;
 use File::Path qw(make_path);
@@ -65,7 +65,7 @@ sub process_directory {
 		
    	# $filename =~ s/\s+/_/g; 
         if ($image =~ /\.pdf$/i) {
-            my @pdfs = Koha::Plugin::HKS3::IIIF::create_iiif_manifest_from_pdf($fpi, $image, $config, $filename);
+            my @pdfs = Koha::Plugin::HKS3::IIIF::create_paths_from_pdf($fpi, $image, $config, $filename);
             store_manifest(\@pdfs, $image, $relative_path, $filename.'.json');
         } else {
             push (@images, $image);
@@ -98,13 +98,13 @@ sub store_manifest {
         label => $label,
     };
 
-    my $manifest = Koha::Plugin::HKS3::IIIF::create_iiif_manifest($record_data, $config);
     my $target_dir = File::Spec->catfile($config->{manifest_dir}, $relative_path);
     unless (-d $target_dir) {    
         make_path($target_dir) or die "Failed to create directory: $!";
     }
     my $manifest_file = File::Spec->catfile($target_dir, $manifest_filename);
-    write_file($manifest_file, encode_json($manifest));    
+    my @partial_manifest = Koha::Plugin::HKS3::IIIF::create_canvases($images, $config);
+    write_file($manifest_file, encode_json(\@partial_manifest));
     print "Manifest created for $relative_path\n";
 
 }

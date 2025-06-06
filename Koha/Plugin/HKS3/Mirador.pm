@@ -20,6 +20,7 @@ use Modern::Perl;
 use base qw(Koha::Plugins::Base);
 use C4::Biblio;
 use C4::Context;
+use FindBin qw($Bin);
 use File::Slurp;
 use Koha::Biblios;
 use Mojo::JSON qw(decode_json);
@@ -152,27 +153,27 @@ sub static_routes {
 sub get_manifest {
     my $field = shift;
 
+    my $manifest_host = $field->subfield('a') || $config->{'manifest_server'};
+
     my $return;
-    if ($field->subfield('d') && ! $field->subfield('a') ) {
-        # path, no hostname
-        my $filename = $field->subfield('d');           
-        my $file = File::Spec->catfile($FindBin::Bin, $filename);
-        $return = read_file($file) or die "Could not open '$file': $!";      
-    } elsif ($field->subfield('a')) {  
-        # hostname, possibly no path?
+    if (!$manifest_host || $manifest_host =~ m{^file://}) {
+        my $filename = $field->subfield('d');
+        my ($base_path) = $manifest_host =~ m{^file://(.+)$};
+        $base_path //= $Bin;
+        my $file = File::Spec->catfile($base_path, $filename);
+        $return = decode_json(read_file($file)) or die "Could not open '$file': $!";
+    } else {
         my $path = uri_encode($field->subfield('d'));
-        my $url = sprintf("%s/%s", $config->{manifest_server}, $path);
+        my $url = sprintf("%s/%s", $manifest_host, $path);
     
         my $http = HTTP::Tiny->new;
         warn "Will query $url for manifest";
         my $response = $http->get($url);
-        
 
         if ($response->{success}) {
             $return = decode_json($response->{content});   
         }
     }
-
 
     return $return;
 }
@@ -199,15 +200,12 @@ sub get_manifest_from_koha {
 
     my @manifest_fields = grep { ($_->subfield('2') // '') eq 'IIIF-Manifest' } @data;
     if (@manifest_fields) {
-        # Backcompat with the old code: only use the first field. Later figure out how to handle this sensibly.
-        my $field = $manifest_fields[0];
-
-        warn "Using preconfigured manifest for $biblionumber";
-        my $manifest = get_manifest($field);
-        $manifest->{label} = $metadata{label};
-        # $manifest->{metadata} = [ { value =>  $record->field('100')->subfield('a') } ];
-        # check if exist
-        return $manifest;
+        warn "Using preconfigured manifest canveses for $biblionumber";
+        my @canvases = map { @{get_manifest($_) // []} } @manifest_fields;
+        return Koha::Plugin::HKS3::IIIF::create_iiif_manifest({
+            %metadata,
+            canvases => \@canvases,
+        }, $config);
     }
 
     warn "Generating manifest for $biblionumber";

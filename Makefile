@@ -1,4 +1,7 @@
-.PHONY: cantaloupe
+.PHONY: cantaloupe install
+
+install:
+	rsync -av Koha ${PLUGINS_DIR}/
 
 cantaloupe:
 	docker run -d -p 8182:8182 \

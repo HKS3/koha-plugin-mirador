@@ -26,7 +26,7 @@ use URI::Encode qw(uri_encode uri_decode);
 
 our @EXPORT = qw(create_iiif_manifest);
 
-sub create_iiif_manifest_from_pdf {
+sub create_paths_from_pdf {
     my ($pdf_file, $name, $config, $filename) = @_;    
     my @images;
     my $pdf = CAM::PDF->new($pdf_file) or return @images; # die "$pdf_file Cannot open PDF file: $!";    
@@ -37,17 +37,20 @@ sub create_iiif_manifest_from_pdf {
     return @images;
 }
 
-sub create_iiif_manifest {
-    my ($record_data, $config, $canvas_template, $manifest_template) = @_;
-    
-    my $ug = Data::UUID->new;
-    my $generate_id = sub { sprintf('http://%s', $ug->to_string($ug->create())) };
+my $ug = Data::UUID->new;
+sub generate_id {
+    return sprintf('http://%s', $ug->to_string($ug->create())) ;
+}
 
-    my $cache = Koha::Caches->get_instance(__PACKAGE__);
-    
+sub create_canvases {
+    my ($images, $config) = @_;
+
     my @canvases;
     my $count = 1;
-    for my $d (@{$record_data->{image_data}}) {
+
+    my $cache = Koha::Caches->get_instance(__PACKAGE__);
+
+    for my $d (@$images) {
         $d = uri_encode($d);
         # remove double uri encoding - XXX
         $d =~ s/%252F/%2F/g;
@@ -67,8 +70,8 @@ sub create_iiif_manifest {
             $cache->set_in_cache($d, $image_info);
         }
 
-        $canvas_template = {
-            '@id'    => $generate_id->(),
+        my $canvas_template = {
+            '@id'    => generate_id(),
             '@type'  => 'sc:Canvas',
             'label'  => sprintf("# %s", $count),
             'height' => $image_info->{height},
@@ -82,21 +85,30 @@ sub create_iiif_manifest {
                     '@id'     => sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),
                     '@type'   => 'dctypes:Image',
                     'format'  => 'image/jpeg',
-                    'height'  => 2805,
-                    'width'   => 1760,
+                    'height' => $image_info->{height},
+                    'width'  => $image_info->{width},
                     'service' => {
                         '@context' => 'http://iiif.io/api/image/3/context.json',
                         '@id'      => sprintf('%s/%s', $config->{iiif_server}, $d),
                         'profile'  => 'level2'
                     },
                 },
-                'on' => $generate_id->(),
+                'on' => generate_id(),
             }],
             'related' => ''
         };
         push (@canvases, $canvas_template);
         $count++;
     }
+
+    return @canvases;
+}
+
+sub create_iiif_manifest {
+    my ($record_data, $config, $canvas_template, $manifest_template) = @_;
+
+    my @canvases = @{$record_data->{canvases}};
+    push @canvases, create_canvases($record_data->{image_data}, $config);
 
     my %labels = (
         title => {
@@ -168,7 +180,7 @@ sub create_iiif_manifest {
 
     $manifest_template = {
         '@context'  => 'http://iiif.io/api/presentation/2/context.json',
-        '@id'       => $generate_id->(),
+        '@id'       => generate_id(),
         '@type'     => 'sc:Manifest',
         'label'     => $record_data->{title},
         'thumbnail' => {
