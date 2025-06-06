@@ -20,6 +20,7 @@ use Modern::Perl;
 use Data::UUID;
 use HTTP::Tiny;
 use JSON;
+use List::Util qw(max sum);
 use Koha::Caches;
 use CAM::PDF;
 use URI::Encode qw(uri_encode uri_decode);
@@ -27,7 +28,7 @@ use URI::Encode qw(uri_encode uri_decode);
 our @EXPORT = qw(create_iiif_manifest);
 
 sub create_paths_from_pdf {
-    my ($pdf_file, $name, $config, $filename) = @_;    
+    my ($pdf_file, $name, $config) = @_;
     my @images;
     my $pdf = CAM::PDF->new($pdf_file) or return @images; # die "$pdf_file Cannot open PDF file: $!";    
     my $num_pages = $pdf->numPages();
@@ -50,54 +51,91 @@ sub create_canvases {
 
     my $cache = Koha::Caches->get_instance(__PACKAGE__);
 
-    for my $d (@$images) {
-        $d = uri_encode($d);
-        # remove double uri encoding - XXX
-        $d =~ s/%252F/%2F/g;
+    for my $entry (@$images) {
+        # we may get multiple per canvas, e.g. transcripts
+        my @elements;
 
-        my $image_info = $cache->get_from_cache($d);
-        unless ($image_info) {
-            my $http = HTTP::Tiny->new;
-            warn "Querying image info for $d";
-            my $response = $http->get(sprintf('%s/%s/info.json', $config->{iiif_server}, $d));
-
-            if (!$response) {
-                warn "Failed to obtain info.json for $d, skipping it in the manifest";
-                next;
-            }
-
-            $image_info = decode_json $response->{content};
-            $cache->set_in_cache($d, $image_info);
+        my @paths;
+        if (ref $entry eq 'ARRAY') {
+            @paths = @$entry;
+        } else {
+            @paths = $entry;
         }
 
-        my $canvas_template = {
-            '@id'    => generate_id(),
-            '@type'  => 'sc:Canvas',
-            'label'  => sprintf("# %s", $count),
-            'height' => $image_info->{height},
-            'width'  => $image_info->{width},
-            'images' => [{
-                '@id'        =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),
+        for my $path (@paths) {
+            my $image_info = $cache->get_from_cache($path);
+            unless ($image_info) {
+                my $http = HTTP::Tiny->new;
+                #warn "Querying image info for $path";
+                my $response = $http->get(sprintf('%s/%s/info.json', $config->{iiif_server}, $path));
+
+                if (!$response) {
+                    warn "Failed to obtain info.json for $path, skipping it in the manifest";
+                    next;
+                }
+
+                $image_info = decode_json $response->{content};
+                $cache->set_in_cache($path, $image_info);
+            }
+
+            push @elements, {
+                path => $path,
+                width => $image_info->{width},
+                height => $image_info->{height},
+                motivation => @elements ? 'sc:supplementing' : 'sc:painting',
+            };
+        }
+
+        my $canvas_id = generate_id();
+        my $xpos = 0;
+        my $padding = 10;
+
+        my $max_height = max map { $_->{height} } @elements;
+        my $total_width = (sum map { $_->{width} } @elements) + $padding * (@elements - 1);
+
+        my $annotation_for_element = sub {
+            my $element = shift;
+
+            my $annotation = {
+                '@id'        =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $element->{path}),
                 '@context'   => 'http://iiif.io/api/presentation/2/context.json',
-                # '@type'    => 'oa:Annotation',
-                'motivation' => 'sc:painting',
-                'resource'   =>  {
-                    '@id'     => sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $d),
+                '@type'      => 'oa:Annotation',
+                'motivation' => $element->{motivation},
+                'resource'   => {
+                    '@id'     => sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $element->{path}),
                     '@type'   => 'dctypes:Image',
                     'format'  => 'image/jpeg',
-                    'height' => $image_info->{height},
-                    'width'  => $image_info->{width},
+                    'height' => $element->{height},
+                    'width'  => $element->{width},
                     'service' => {
                         '@context' => 'http://iiif.io/api/image/3/context.json',
-                        '@id'      => sprintf('%s/%s', $config->{iiif_server}, $d),
+                        '@id'      => sprintf('%s/%s', $config->{iiif_server}, $element->{path}),
                         'profile'  => 'level2'
                     },
                 },
-                'on' => generate_id(),
-            }],
+                'on' => "$canvas_id#xywh=$xpos,0,$element->{width},$element->{height}",
+            };
+
+            $xpos += $element->{width} + $padding;
+            return $annotation;
+        };
+
+        my $canvas_template = {
+            '@id'    => $canvas_id,
+            '@type'  => 'sc:Canvas',
+            'label'  => sprintf("# %s", $count),
+            # TODO fix this stupid-ass hack somehow
+            # this nonsense here keeps the aspect ratio similar-ish which reduces stupid thumbnail padding in Mirador, but it also makes the actual canvas zoomed out
+            'height' => $max_height * @elements,
+            'width'  => $total_width,
+            'images' => [map { $annotation_for_element->($_) } @elements],
             'related' => ''
         };
+        if (@elements > 1) {
+            $canvas_template->{thumbnail} = $canvas_template->{images}[0]{resource};
+        }
         push (@canvases, $canvas_template);
+
         $count++;
     }
 

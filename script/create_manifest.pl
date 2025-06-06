@@ -1,51 +1,70 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use File::Find;
-use File::Basename;
 use JSON;
 use Modern::Perl;
-use File::Slurp;
 
-use Data::Dumper;
-use Getopt::Long;
-use Path::Tiny;
 use Koha::Plugin::HKS3::IIIF;
+
 use File::Basename;
+use File::Find;
+use File::Slurp;
 use File::Spec;
 use File::Path qw(make_path);
 
 use Getopt::Long qw( GetOptions );
+use URI::Encode qw(uri_encode);
 
 my $config = {}; 
 
 GetOptions(
-    'iiif_server:s'   => \$config->{iiif_server},
-    'image_dir:s'     => \$config->{image_dir},
-    'manifest_dir:s'  => \$config->{manifest_dir},
+    'iiif_server=s'   => \$config->{iiif_server},
+    'image_dir=s'     => \$config->{image_dir},
+    'manifest_dir=s'  => \$config->{manifest_dir},
 ) or die "Error in command line arguments\n";
+
+if (scalar(grep { $_ } values %$config) != 3) {
+    die "Usage: $0 --iiif_server <URL> --image_dir <directory> --manifest_dir <directory>\n";
+}
 
 my $start_dir = $config->{image_dir};
 my $dir_sep = '%2F';
 
-# Allowed image extensions
-my @image_extensions = qw(jpg jpeg png gif pdf );
-
-# Function to check if a file is an image
 sub is_image {
     my $file = shift;
     my ($ext) = $file =~ /\.([^.]+)$/;
-    return grep { lc($ext) eq $_ } @image_extensions;
+    return grep { lc($ext) eq $_ } qw(jpg jpeg png gif pdf);
+}
+
+sub match_transcripts {
+    my @paths = @_;
+    my %pathmap = map { ($_ => 1) } @paths;
+
+    my @groups;
+
+    for my $path (@paths) {
+        # does it have a transcript?
+        if ($pathmap{"9$path"}) {
+            push @groups, [$path, "9$path"];
+        }
+        # is it a transcript?
+        elsif ($path =~ /^9/ and $pathmap{$path =~ s/^9//r}) {
+            # ignore
+        }
+        else {
+            push @groups, $path;
+        }
+    }
+
+    return \@groups;
 }
 
 # Function to process a directory
 sub process_directory {
     my $dir = shift;
-    say $dir;
+    say "Processing $dir...";
     
-# Remove base directory
     my $relative_path = File::Spec->abs2rel($dir, $start_dir);
-    say $relative_path;
 
     opendir(my $dh, $dir) or die "Could not open '$dir' for reading: $!\n";
     my @files = readdir($dh);
@@ -53,29 +72,21 @@ sub process_directory {
 
     my @image_files = grep { -f $_ && is_image($_) } map { sprintf("%s/%s", $dir, $_) } sort @files;
     return unless @image_files;
-    my @images;
 
-    for my $image (@image_files) {    
-        my $fpi = $image;    
-	my $filename = basename($image);
-        $image =~ s/^\Q$start_dir\/\E//;                
-        $image =~ s/\//$dir_sep/g;
+    my @not_pdfs;
+    for my $image_path (@image_files) {
+        my $filename = basename($image_path);
+        my $encoded_path = uri_encode($image_path =~ s/^\Q$start_dir\/\E//r, { encode_reserved => 1 });
 		
-	printf ("%s \n", $image);
-		
-   	# $filename =~ s/\s+/_/g; 
-        if ($image =~ /\.pdf$/i) {
-            my @pdfs = Koha::Plugin::HKS3::IIIF::create_paths_from_pdf($fpi, $image, $config, $filename);
-            store_manifest(\@pdfs, $image, $relative_path, $filename.'.json');
+        if ($filename =~ /\.pdf$/i) {
+            my @pdfs = Koha::Plugin::HKS3::IIIF::create_paths_from_pdf($image_path, $encoded_path, $config);
+            store_manifest(\@pdfs, $encoded_path, $relative_path, $filename.'.json');
         } else {
-            push (@images, $image);
+            push @not_pdfs, $encoded_path;
         }
     }
     
-    store_manifest(\@images, $dir, $relative_path);
-    print Dumper \@images;
-   
-    
+    store_manifest(match_transcripts(@not_pdfs), $dir, $relative_path) if @not_pdfs;
 }
 
 # Crawl the filesystem and process directories
@@ -87,26 +98,25 @@ find({
     no_chdir => 1
 }, $start_dir);
 
-print "Completed generating manifests.\n";
+say "Completed generating manifests.";
 
 sub store_manifest {
     my ($images, $label, $relative_path, $manifest_filename) = @_;
     $manifest_filename //= 'manifest.json';
 
     my $record_data = {
-        image_data => $images,        
+        image_data => $images,
         label => $label,
     };
 
     my $target_dir = File::Spec->catfile($config->{manifest_dir}, $relative_path);
-    unless (-d $target_dir) {    
+    unless (-d $target_dir) {
         make_path($target_dir) or die "Failed to create directory: $!";
     }
     my $manifest_file = File::Spec->catfile($target_dir, $manifest_filename);
     my @partial_manifest = Koha::Plugin::HKS3::IIIF::create_canvases($images, $config);
     write_file($manifest_file, encode_json(\@partial_manifest));
-    print "Manifest created for $relative_path\n";
-
+    say "Manifest created: $manifest_file";
 }
 
 
