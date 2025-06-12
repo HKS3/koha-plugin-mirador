@@ -36,19 +36,21 @@ my $html = <<'EOT';
     <div id="mirador" style="position: absolute; top: 0; bottom: 0; left: 0; right: 0;"></div>    
     <script type="text/javascript">
     var miradorInstance = Mirador.viewer({
-             id: 'mirador',
-             theme: {
-                transitions: window.location.port === '4488' ?  { create: () => 'none' } : {},
-             },
-             windows: [{
-                 manifestId: '/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=XBIBX',
-                 // manifestId: 'https://api.irht.cnrs.fr/ark:/63955/fthdrzs3uxab/manifest.json',
-                 thumbnailNavigationPosition: 'far-bottom'
-                }],
-            window: {
-                // defaultView: 'gallery'
-                }            
-         });                            
+        id: 'mirador',
+        windows: [{
+          manifestId: '/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=XBIBX',
+          thumbnailNavigationPosition: 'far-bottom'
+        }],
+        window: {
+          allowClose: false,
+          allowFullscreen: true,
+        },
+        workspaceControlPanel: {
+          // per docs: Useful if you want to lock the viewer down to only the configured manifests.
+          // the only valuable thing we lose is the fullscreen button, so we enable it elsewhere
+          enabled: false,
+        },
+      });
     </script>
   </body>
 </html>
