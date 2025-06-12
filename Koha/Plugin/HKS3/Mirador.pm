@@ -180,6 +180,11 @@ sub get_manifest {
 
 sub get_manifest_from_koha {
     my ($biblionumber) = @_;
+
+    unless ($config->{iiif_server}) {
+        die "Mirador plugin not configured";
+    }
+
     my $biblio = Koha::Biblios->find($biblionumber);
     my $record = $biblio->metadata->record;
 
