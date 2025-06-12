@@ -182,7 +182,7 @@ sub get_manifest_from_koha {
     my ($biblionumber) = @_;
     my $biblio = Koha::Biblios->find($biblionumber);
     my $record = $biblio->metadata->record;
-    
+
     my @data = $record->field('856');
     return unless @data;
 
@@ -208,8 +208,10 @@ sub get_manifest_from_koha {
         }, $config);
     }
 
-    warn "Generating manifest for $biblionumber";
     my @iiif_fields = grep { ($_->subfield('2') // '') eq 'IIIF' } @data;
+    return unless @iiif_fields;
+
+    warn "Generating manifest for $biblionumber";
 
     my @paths = map { $_->subfield('d') } @iiif_fields;
 

@@ -145,7 +145,7 @@ sub create_canvases {
 sub create_iiif_manifest {
     my ($record_data, $config, $canvas_template, $manifest_template) = @_;
 
-    my @canvases = @{$record_data->{canvases}};
+    my @canvases = @{$record_data->{canvases} // []};
     push @canvases, create_canvases($record_data->{image_data}, $config);
 
     my %labels = (
