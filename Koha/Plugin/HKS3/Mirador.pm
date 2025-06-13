@@ -218,7 +218,7 @@ sub get_manifest_from_koha {
 
     warn "Generating manifest for $biblionumber";
 
-    my @paths = map { $_->subfield('d') } @iiif_fields;
+    my @paths = map { { encoded_uri => sprintf('%s/%s', $config->{iiif_server}, $_->subfield('d')) } } @iiif_fields;
 
     return Koha::Plugin::HKS3::IIIF::create_iiif_manifest({
         %metadata,

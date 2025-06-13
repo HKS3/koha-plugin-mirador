@@ -12,6 +12,7 @@ use File::Slurp;
 use File::Spec;
 use File::Path qw(make_path);
 use Getopt::Long qw( GetOptions );
+use Imager;
 use URI::Encode qw(uri_encode);
 use Try::Tiny;
 use Encode qw/encode decode/;
@@ -41,17 +42,17 @@ sub is_image {
 
 sub match_transcripts {
     my @paths = @_;
-    my %pathmap = map { ($_ => 1) } @paths;
+    my %pathmap = map { ($_->{filename} => $_) } @paths;
 
     my @groups;
 
     for my $path (@paths) {
         # does it have a transcript?
-        if ($pathmap{"9$path"}) {
-            push @groups, [$path, "9$path"];
+        if (my $transcript = $pathmap{"9$path->{filename}"}) {
+            push @groups, [$path, $transcript];
         }
         # is it a transcript?
-        elsif ($path =~ /^9/ and $pathmap{$path =~ s/^9//r}) {
+        elsif ($path->{filename} =~ /^9/ and $pathmap{$path->{filename} =~ s/^9//r}) {
             # ignore
         }
         else {
@@ -84,10 +85,23 @@ sub process_directory {
         my $encoded_path = uri_encode( $u_image_path =~ s/^\Q$start_dir\/\E//r, { encode_reserved => 1 });
 		
         if ($filename =~ /\.pdf$/i) {
-            my @pdfs = Koha::Plugin::HKS3::IIIF::create_paths_from_pdf($image_path, $encoded_path, $config);
+            my @pdfs = Koha::Plugin::HKS3::IIIF::create_paths_from_pdf({
+                filename => $filename,
+                full_path => $image_path,
+                encoded_uri => "$config->{iiif_server}/$encoded_path",
+            });
             store_manifest(\@pdfs, $encoded_path, $relative_path, $filename.'.json');
         } else {
-            push @not_pdfs, $encoded_path;
+            my $img = Imager->new(file => $image_path);
+            push @not_pdfs, {
+                filename => $filename,
+                full_path => $image_path,
+                encoded_uri => "$config->{iiif_server}/$encoded_path",
+                image_info => {
+                    width => $img->getwidth,
+                    height => $img->getheight,
+                },
+            };
         }
     }
     

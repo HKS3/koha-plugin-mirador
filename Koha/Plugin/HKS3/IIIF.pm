@@ -27,12 +27,16 @@ use URI::Encode qw(uri_encode uri_decode);
 our @EXPORT = qw(create_iiif_manifest);
 
 sub create_paths_from_pdf {
-    my ($pdf_file, $name, $config) = @_;
+    my $file = shift;
+    # my ($pdf_file, $name) = @_;
     my @images;
-    my $pdf = CAM::PDF->new($pdf_file) or return @images; # die "$pdf_file Cannot open PDF file: $!";    
-    my $num_pages = $pdf->numPages();
+    my $pdf = CAM::PDF->new($file->{full_path}) or return @images; # die "$pdf_file Cannot open PDF file: $!";
     for my $i (1..$pdf->numPages()) {
-        push(@images, sprintf("%s;%d", $name, $i));
+        push(@images, {
+            filename => $file->{filename},
+            full_path => $file->{full_path},
+            encoded_uri => sprintf("%s;%d", $file->{encoded_uri}, $i),
+        });
     }
     return @images;
 }
@@ -52,26 +56,29 @@ sub create_canvases {
         # we may get multiple per canvas, e.g. transcripts
         my @elements;
 
-        my @paths;
+        my @files;
         if (ref $entry eq 'ARRAY') {
-            @paths = @$entry;
+            @files = @$entry;
         } else {
-            @paths = $entry;
+            @files = $entry;
         }
 
-        for my $path (@paths) {
-            my $http = HTTP::Tiny->new;
-            my $response = $http->get(sprintf('%s/%s/info.json', $config->{iiif_server}, $path));
+        for my $file (@files) {
+            my $image_info = $file->{image_info};
+            unless ($image_info) {
+                my $http = HTTP::Tiny->new;
+                my $response = $http->get(sprintf('%s/info.json', $file->{encoded_uri}));
 
-            if (!$response) {
-                warn "Failed to obtain info.json for $path, skipping it in the manifest";
-                next;
+                if (!$response) {
+                    warn "Failed to obtain info.json for $file->{encoded_uri}, skipping it in the manifest";
+                    next;
+                }
+
+                $image_info = decode_json $response->{content};
             }
 
-            my $image_info = decode_json $response->{content};
-
             push @elements, {
-                path => $path,
+                uri => $file->{encoded_uri},
                 width => $image_info->{width},
                 height => $image_info->{height},
                 motivation => @elements ? 'sc:supplementing' : 'sc:painting',
@@ -89,19 +96,19 @@ sub create_canvases {
             my $element = shift;
 
             my $annotation = {
-                '@id'        =>  sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $element->{path}),
+                '@id'        =>  sprintf('%s/full/full/0/default.jpg', $element->{uri}),
                 '@context'   => 'http://iiif.io/api/presentation/2/context.json',
                 '@type'      => 'oa:Annotation',
                 'motivation' => $element->{motivation},
                 'resource'   => {
-                    '@id'     => sprintf('%s/%s/full/full/0/default.jpg', $config->{iiif_server}, $element->{path}),
+                    '@id'     => sprintf('%s/full/full/0/default.jpg', $element->{uri}),
                     '@type'   => 'dctypes:Image',
                     'format'  => 'image/jpeg',
                     'height' => $element->{height},
                     'width'  => $element->{width},
                     'service' => {
                         '@context' => 'http://iiif.io/api/image/3/context.json',
-                        '@id'      => sprintf('%s/%s', $config->{iiif_server}, $element->{path}),
+                        '@id'      => sprintf('%s', $element->{uri}),
                         'profile'  => 'level2'
                     },
                 },
