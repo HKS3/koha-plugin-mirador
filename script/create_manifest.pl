@@ -14,6 +14,7 @@ use File::Path qw(make_path);
 
 use Getopt::Long qw( GetOptions );
 use URI::Encode qw(uri_encode);
+use Try::Tiny;
 
 my $config = {}; 
 
@@ -86,7 +87,11 @@ sub process_directory {
         }
     }
     
-    store_manifest(match_transcripts(@not_pdfs), $dir, $relative_path) if @not_pdfs;
+    try {
+        store_manifest(match_transcripts(@not_pdfs), $dir, $relative_path) if @not_pdfs;
+    } catch {
+        warn "Failed to write manifest for $relative_path: $_";
+    };
 }
 
 # Crawl the filesystem and process directories
