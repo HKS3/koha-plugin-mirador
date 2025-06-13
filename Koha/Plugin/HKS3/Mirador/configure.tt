@@ -26,6 +26,15 @@
         <input type="text" name="manifest_server" value="[% manifest_server %]" />
         </p>
         
+        <p>
+            <label for="manifest_server">Attribution (English): </label>
+            <input type="text" name="attribution_en" value="[% attribution_en %]" />
+        </p>
+
+        <p>
+            <label for="manifest_server">Attribution (Deutsch): </label>
+            <input type="text" name="attribution_de" value="[% attribution_de %]" />
+        </p>
         
         <input type="hidden" name="save" value="1" />
 

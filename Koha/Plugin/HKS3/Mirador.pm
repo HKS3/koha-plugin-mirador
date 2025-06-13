@@ -83,14 +83,13 @@ sub load_config {
         language => 'ger',
     };
 
-    # TODO should be validated against JSON schema, as it may blow up the manifest if in the wrong format
     $config->{attribution} = [
         {
-            '@value' => 'Austrian National Library',
+            '@value' => ($self->retrieve_data('attribution_en') // 'N/A'),
             '@language' => 'en'
         },
         {
-            '@value' => 'Österreichische Nationalbibliothek',
+            '@value' => ($self->retrieve_data('attribution_de') // 'N/A'),
             '@language' => 'ger'
         }
     ];
@@ -114,8 +113,10 @@ sub configure {
 
         ## Grab the values we already have for our settings, if any exist
         $template->param(
-            iiif_server       => $self->retrieve_data('iiif_server'),    
-            manifest_server   => $self->retrieve_data('manifest_server'),
+            iiif_server     => $self->retrieve_data('iiif_server'),
+            manifest_server => $self->retrieve_data('manifest_server'),
+            attribution_en  => $self->retrieve_data('attribution_en'),
+            attribution_de  => $self->retrieve_data('attribution_de'),
         );
 
         $self->output_html( $template->output() );
@@ -123,8 +124,10 @@ sub configure {
     else {
         $self->store_data(
             {
-                iiif_server         => $cgi->param('iiif_server'),
-                manifest_server     => $cgi->param('manifest_server'),
+                iiif_server     => $cgi->param('iiif_server'),
+                manifest_server => $cgi->param('manifest_server'),
+                attribution_en  => $cgi->param('attribution_en'),
+                attribution_de  => $cgi->param('attribution_de'),
                 last_configured_by => C4::Context->userenv->{'number'},
             }
         );
