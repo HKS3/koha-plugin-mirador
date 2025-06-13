@@ -21,7 +21,6 @@ use Data::UUID;
 use HTTP::Tiny;
 use JSON;
 use List::Util qw(max sum);
-use Koha::Caches;
 use CAM::PDF;
 use URI::Encode qw(uri_encode uri_decode);
 
@@ -49,8 +48,6 @@ sub create_canvases {
     my @canvases;
     my $count = 1;
 
-    my $cache = Koha::Caches->get_instance(__PACKAGE__);
-
     for my $entry (@$images) {
         # we may get multiple per canvas, e.g. transcripts
         my @elements;
@@ -63,20 +60,15 @@ sub create_canvases {
         }
 
         for my $path (@paths) {
-            my $image_info = $cache->get_from_cache($path);
-            unless ($image_info) {
-                my $http = HTTP::Tiny->new;
-                #warn "Querying image info for $path";
-                my $response = $http->get(sprintf('%s/%s/info.json', $config->{iiif_server}, $path));
+            my $http = HTTP::Tiny->new;
+            my $response = $http->get(sprintf('%s/%s/info.json', $config->{iiif_server}, $path));
 
-                if (!$response) {
-                    warn "Failed to obtain info.json for $path, skipping it in the manifest";
-                    next;
-                }
-
-                $image_info = decode_json $response->{content};
-                $cache->set_in_cache($path, $image_info);
+            if (!$response) {
+                warn "Failed to obtain info.json for $path, skipping it in the manifest";
+                next;
             }
+
+            my $image_info = decode_json $response->{content};
 
             push @elements, {
                 path => $path,
