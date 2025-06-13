@@ -17,11 +17,13 @@ use Try::Tiny;
 use Encode qw/encode decode/;
 
 my $config = {}; 
+my $rebuild_manifests;
 
 GetOptions(
     'iiif_server=s'   => \$config->{iiif_server},
     'image_dir=s'     => \$config->{image_dir},
     'manifest_dir=s'  => \$config->{manifest_dir},
+    'rebuild'         => \$rebuild_manifests,
 ) or die "Error in command line arguments\n";
 
 if (scalar(grep { $_ } values %$config) != 3) {
@@ -89,11 +91,7 @@ sub process_directory {
         }
     }
     
-    try {
-        store_manifest(match_transcripts(@not_pdfs), $dir, $relative_path) if @not_pdfs;
-    } catch {
-        warn "Failed to write manifest for $relative_path: $_";
-    };
+    store_manifest(match_transcripts(@not_pdfs), $dir, $relative_path) if @not_pdfs;
 }
 
 # Crawl the filesystem and process directories
@@ -121,10 +119,16 @@ sub store_manifest {
         make_path($target_dir) or die "Failed to create directory: $!";
     }
     my $manifest_file = File::Spec->catfile($target_dir, $manifest_filename);
-    unless (-f $manifest_filename) {
-        my @partial_manifest = Koha::Plugin::HKS3::IIIF::create_canvases($images, $config);
-        write_file($manifest_file, encode_json(\@partial_manifest));
-        say "Manifest created: $manifest_file";
+    if (-f $manifest_file && !$rebuild_manifests) {
+        say "Manifest $manifest_file already exists";
+    } else {
+        try {
+            my @partial_manifest = Koha::Plugin::HKS3::IIIF::create_canvases($images, $config);
+            write_file($manifest_file, encode_json(\@partial_manifest));
+            say "Manifest created: $manifest_file";
+        } catch {
+            warn "Failed to write manifest for $relative_path: $_";
+        };
     }
 }
 
