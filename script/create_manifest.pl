@@ -11,10 +11,10 @@ use File::Find;
 use File::Slurp;
 use File::Spec;
 use File::Path qw(make_path);
-
 use Getopt::Long qw( GetOptions );
 use URI::Encode qw(uri_encode);
 use Try::Tiny;
+use Encode qw/encode decode/;
 
 my $config = {}; 
 
@@ -77,7 +77,9 @@ sub process_directory {
     my @not_pdfs;
     for my $image_path (@image_files) {
         my $filename = basename($image_path);
-        my $encoded_path = uri_encode($image_path =~ s/^\Q$start_dir\/\E//r, { encode_reserved => 1 });
+        my $u_image_path = decode('utf8', $image_path);
+        # printf("%s - %s\n", $image_path, $u_image_path);
+        my $encoded_path = uri_encode( $u_image_path =~ s/^\Q$start_dir\/\E//r, { encode_reserved => 1 });
 		
         if ($filename =~ /\.pdf$/i) {
             my @pdfs = Koha::Plugin::HKS3::IIIF::create_paths_from_pdf($image_path, $encoded_path, $config);
