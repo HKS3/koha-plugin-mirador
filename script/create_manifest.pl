@@ -119,9 +119,11 @@ sub store_manifest {
         make_path($target_dir) or die "Failed to create directory: $!";
     }
     my $manifest_file = File::Spec->catfile($target_dir, $manifest_filename);
-    my @partial_manifest = Koha::Plugin::HKS3::IIIF::create_canvases($images, $config);
-    write_file($manifest_file, encode_json(\@partial_manifest));
-    say "Manifest created: $manifest_file";
+    unless (-f $manifest_filename) {
+        my @partial_manifest = Koha::Plugin::HKS3::IIIF::create_canvases($images, $config);
+        write_file($manifest_file, encode_json(\@partial_manifest));
+        say "Manifest created: $manifest_file";
+    }
 }
 
 
