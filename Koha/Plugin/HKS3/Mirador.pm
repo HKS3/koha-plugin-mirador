@@ -24,7 +24,6 @@ use FindBin qw($Bin);
 use File::Slurp;
 use Koha::Biblios;
 use Mojo::JSON qw(decode_json);
-use URI::Encode  qw(uri_encode);
 use Koha::Plugin::HKS3::IIIF qw(create_iiif_manifest);
 
 =head1 Koha::Plugin::HKS3::Mirador
@@ -166,7 +165,7 @@ sub get_manifest {
         my $file = File::Spec->catfile($base_path, $filename);
         $return = decode_json(read_file($file)) or die "Could not open '$file': $!";
     } else {
-        my $path = uri_encode($field->subfield('d'));
+        my $path = $field->subfield('d');
         my $url = sprintf("%s/%s", $manifest_host, $path);
     
         my $http = HTTP::Tiny->new;
