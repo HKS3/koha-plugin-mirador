@@ -21,16 +21,18 @@ use Data::UUID;
 use HTTP::Tiny;
 use JSON;
 use List::Util qw(max sum);
-use CAM::PDF;
 use URI::Encode qw(uri_encode uri_decode);
 
 our @EXPORT = qw(create_iiif_manifest);
 
 sub create_paths_from_pdf {
     my $file = shift;
-    # my ($pdf_file, $name) = @_;
+
     my @images;
+
+    require CAM::PDF;
     my $pdf = CAM::PDF->new($file->{full_path}) or return @images; # die "$pdf_file Cannot open PDF file: $!";
+
     for my $i (1..$pdf->numPages()) {
         push(@images, {
             filename => $file->{filename},
@@ -38,6 +40,7 @@ sub create_paths_from_pdf {
             encoded_uri => sprintf("%s;%d", $file->{encoded_uri}, $i),
         });
     }
+
     return @images;
 }
 
