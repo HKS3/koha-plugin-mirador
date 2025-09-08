@@ -21,7 +21,6 @@ use Data::UUID;
 use HTTP::Tiny;
 use JSON;
 use List::Util qw(max sum);
-use URI::Encode qw(uri_encode uri_decode);
 
 our @EXPORT = qw(create_iiif_manifest);
 

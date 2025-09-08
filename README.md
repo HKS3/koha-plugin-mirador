@@ -44,12 +44,6 @@ add the plugin dir to your koha-conf.xml
 <pluginsdir>/var/lib/koha/<instancename>/plugins/koha-plugin-mirador</pluginsdir>
 ```
 
-Some perl-modules are not part of Koha and may need to be installed
-```
-apt-get install cpanminus
-cpanm CAM::PDF
-cpanm URI/Encode.pm
-```
 and then install the plugin(s) via
 ```
 perl /usr/share/koha/bin/devel/install_plugins.pl 
