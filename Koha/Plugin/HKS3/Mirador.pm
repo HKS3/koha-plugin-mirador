@@ -24,6 +24,8 @@ use FindBin qw($Bin);
 use File::Slurp;
 use Koha::Biblios;
 use Mojo::JSON qw(decode_json);
+use URI;
+
 use Koha::Plugin::HKS3::IIIF qw(create_iiif_manifest);
 
 =head1 Koha::Plugin::HKS3::Mirador
@@ -167,11 +169,12 @@ sub get_manifest {
         $return = decode_json(read_file($file)) or die "Could not open '$file': $!";
     } else {
         my $path = $field->subfield('d');
-        my $url = sprintf("%s/%s", $manifest_host, $path);
+        my $url = URI->new($manifest_host);
+        $url->path($path);
     
         my $http = HTTP::Tiny->new;
         warn "Will query $url for manifest";
-        my $response = $http->get($url);
+        my $response = $http->get($url->as_string);
 
         if ($response->{success}) {
             $return = decode_json($response->{content});   
