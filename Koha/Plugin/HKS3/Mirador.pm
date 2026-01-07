@@ -170,7 +170,7 @@ sub get_manifest {
     } else {
         my $path = $field->subfield('d');
         my $url = URI->new($manifest_host);
-        $url->path($path);
+        $url->path($url->path . "/$path");
     
         my $http = HTTP::Tiny->new;
         warn "Will query $url for manifest";
