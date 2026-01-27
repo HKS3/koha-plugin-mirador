@@ -25,19 +25,22 @@ $(document).ready(function() {
                 // $("#catalogue_detail_biblio > div.record").append(`
                 let fullUrl = `${window.location.origin}/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=${biblionumber}`;
                 $("div.col-lg-3:has(> div#ulactioncontainer)").prepend(`
-                    <div width="100%" style="display: flex;">
-                        <input type="text"
-                            editable=false
-                            style="flex-grow: 1;"
-                            value="${fullUrl}"
-                        >
-                            <button type="button"
-                                onclick="navigator.clipboard.writeText('${fullUrl}')"
-                                class="btn btn-secondary"
+                    <div style="background-color: #F5F5F5; padding: 0.5em;">
+                        <h5> IIIF Manifest </h5>
+                        <div width="100%" style="display: flex;">
+                            <input type="text"
+                                editable=false
+                                style="flex-grow: 1;"
+                                value="${fullUrl}"
                             >
-                                Copy
-                            </button>
-                        </input>
+                                <button type="button"
+                                    onclick="navigator.clipboard.writeText('${fullUrl}')"
+                                    class="btn btn-secondary"
+                                >
+                                    Copy
+                                </button>
+                            </input>
+                        </div>
                     </div>
                 `);
                 const lang = document.querySelector('html').getAttribute('lang');
