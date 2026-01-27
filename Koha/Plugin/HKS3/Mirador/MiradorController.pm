@@ -12,8 +12,11 @@ use Koha::Plugin::HKS3::Mirador qw/get_manifest_from_koha/;
 sub get {
     my $c = shift->openapi->valid_input or return;
     my $biblionumber = $c->validation->param('biblionumber');
-    my $viewer = $c->validation->param('viewer');        
-    return $c->render(status => 200, text => viewer($biblionumber)) if $viewer;    
+    my $viewer = $c->validation->param('viewer');
+    my $lang = $c->validation->param('lang');
+
+    return $c->render(status => 200, text => viewer($biblionumber, $lang)) if $viewer;
+
     my $manifest = get_manifest_from_koha($biblionumber);
     return $c->render( status => 404, openapi => 
       {'error' => '404', 'no IIIF data found for biblionumber' => $biblionumber}) unless $manifest;
@@ -21,7 +24,7 @@ sub get {
 }
 
 sub viewer {
-    my $biblionumber = shift;
+    my ($biblionumber, $lang) = @_;
 my $html = <<'EOT';
 <html lang="en">
   <head>
@@ -37,6 +40,7 @@ my $html = <<'EOT';
     <script type="text/javascript">
     var miradorInstance = Mirador.viewer({
         id: 'mirador',
+        language: 'XLANGX',
         windows: [{
           manifestId: '/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=XBIBX',
           thumbnailNavigationPosition: 'far-bottom'
@@ -57,6 +61,7 @@ my $html = <<'EOT';
 EOT
 
 $html =~ s/XBIBX/$biblionumber/g;
+$html =~ s/XLANGX/$lang/g;
 return $html;
 }
 

@@ -36,8 +36,9 @@ $(document).ready(function() {
             // var volumes = $("#breadcrumbs").after(volumes_table);                   
             // var volumes = $("#catalogue_detail_biblio > div.record > h1")
             
+            const lang = document.querySelector('html').getAttribute('lang');
             $("#catalogue_detail_biblio > div.record").append(`
-               <iframe src="/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=`+biblionumber+`&viewer=1" width="800" height="600" 
+               <iframe src="/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=`+biblionumber+`&viewer=1&lang=${lang}" width="800" height="600"
                marginwidth="0" marginheight="0" frameborder="0" scrolling="no" id="frame" allowfullscreen="">
                <div id="mirador">Mirador Body</div>
                </iframe>
@@ -50,4 +51,3 @@ $(document).ready(function() {
         });
     }
 })
-
