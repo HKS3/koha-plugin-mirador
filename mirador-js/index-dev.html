@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="de-DE">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Mirador demo</title>
+</head>
+
+<body>
+    <div id="mirador"></div>
+    <script type="module" src="index.js"></script>
+    <script type="module">
+        import { installMirador } from "./index.js";
+
+        installMirador(
+            'mirador', 
+            'https://purl.stanford.edu/sn904cj3429/iiif/manifest',
+            document.querySelector('html').getAttribute('lang'),
+        );
+    </script>
+</body>
+
+</html>

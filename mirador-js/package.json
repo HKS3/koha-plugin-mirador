@@ -1,0 +1,49 @@
+{
+  "name": "hks3-mirador",
+  "version": "1.0.0",
+  "description": "Mirador plugin customized for Koha",
+  "private": true,
+  "source": "index.js",
+  "module": "dist/mirador.mjs",
+  "not_targets": {
+    "module": {
+      "includeNodeModules": {
+        "mirador": true,
+        "mirador-image-tools": true
+      }
+    }
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "serve": "rm -rf dist .parcel-cache && parcel serve index.html"
+  },
+  "author": "HKS3 Tadeusz Sośnierz <tadeusz@sosnierz.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@mui/icons-material": "^7.3.7",
+    "@mui/material": "^7.0.0",
+    "@mui/system": "^7.0.0",
+    "mirador": "4.0.0",
+    "mirador-image-tools": "1.0.0",
+    "prop-types": "^15.7.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-i18next": "^15.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.6",
+    "@babel/preset-react": "^7.28.5",
+    "@rollup/plugin-babel": "^6.1.0",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-inject": "^5.0.5",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-replace": "^6.0.3",
+    "parcel": "^2.0.0",
+    "process": "^0.11.10",
+    "rollup": "^4.57.0",
+    "rollup-plugin-terser": "^7.0.2"
+  }
+}

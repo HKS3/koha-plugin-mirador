@@ -19,13 +19,6 @@
                 "description": "viewer",
                 "required": false,
                 "type": "integer"
-            },
-            {
-                "name": "lang",
-                "in": "query",
-                "description": "language",
-                "required": false,
-                "type": "string"
             }
             ],
             "produces": [

@@ -18,6 +18,10 @@ jobs:
         MINIMUM_KOHA_VERSION=$(perl -lne 'print $1 if /minimum_version\s*=>\s*\D([\d\.]+)\D/' Koha/Plugin/HKS3/Mirador.pm)
         echo "Minimum Koha version: $MINIMUM_KOHA_VERSION"
         echo "minimum_koha_version=$MINIMUM_KOHA_VERSION" >> $GITHUB_OUTPUT
+    - name: Build mirador.js bundle
+      id: mirador-bundle
+      run: |
+        make build
     - name: Build Koha Plugin kpz artifact
       id: kpz
       uses: "bywatersolutions/github-action-koha-plugin-create-kpz@master"

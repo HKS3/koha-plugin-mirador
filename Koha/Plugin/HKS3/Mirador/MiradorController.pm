@@ -13,9 +13,8 @@ sub get {
     my $c = shift->openapi->valid_input or return;
     my $biblionumber = $c->validation->param('biblionumber');
     my $viewer = $c->validation->param('viewer');
-    my $lang = $c->validation->param('lang');
 
-    return $c->render(status => 200, text => viewer($biblionumber, $lang)) if $viewer;
+    return $c->render(status => 200, text => viewer($biblionumber)) if $viewer;
 
     my $manifest = get_manifest_from_koha($biblionumber);
     return $c->render( status => 404, openapi => 
@@ -24,45 +23,23 @@ sub get {
 }
 
 sub viewer {
-    my ($biblionumber, $lang) = @_;
-my $html = <<'EOT';
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="theme-color" content="#000000">
-    <title>Mirador</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500">
-    <script src="https://unpkg.com/mirador@latest/dist/mirador.min.js" crossorigin=""></script>
-  </head>
-  <body>
-    <div id="mirador" style="position: absolute; top: 0; bottom: 0; left: 0; right: 0;"></div>    
-    <script type="text/javascript">
-    var miradorInstance = Mirador.viewer({
-        id: 'mirador',
-        language: 'XLANGX',
-        windows: [{
-          manifestId: '/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=XBIBX',
-          thumbnailNavigationPosition: 'far-bottom'
-        }],
-        window: {
-          allowClose: false,
-          allowFullscreen: true,
-        },
-        workspaceControlPanel: {
-          // per docs: Useful if you want to lock the viewer down to only the configured manifests.
-          // the only valuable thing we lose is the fullscreen button, so we enable it elsewhere
-          enabled: false,
-        },
-      });
+    my ($biblionumber) = @_;
+    my $html = <<'EOT';
+    <div id="mirador""></div>
+    <script type="module" src="/api/v1/contrib/hks3_mirador/static/mirador.js"></script>
+    <script type="module">
+        import installMirador from "./static/mirador.js";
+
+        installMirador(
+            'mirador', 
+            '/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=XBIBX',
+            document.querySelector('html').getAttribute('lang'),
+        );
     </script>
-  </body>
-</html>
 EOT
 
-$html =~ s/XBIBX/$biblionumber/g;
-$html =~ s/XLANGX/$lang/g;
-return $html;
+    $html =~ s/XBIBX/$biblionumber/g;
+    return $html;
 }
 
 1;

@@ -43,9 +43,8 @@ $(document).ready(function() {
                         </div>
                     </div>
                 `);
-                const lang = document.querySelector('html').getAttribute('lang');
                 $("div.col-lg-3:has(> div#ulactioncontainer)").prepend(`
-                   <iframe src="/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=`+biblionumber+`&viewer=1&lang=${lang}"
+                   <iframe src="/api/v1/contrib/hks3_mirador/iiifmanifest?biblionumber=`+biblionumber+`&viewer=1"
                    style='width: 100%; aspect-ratio: 4/3'
                    marginwidth="0" marginheight="0" frameborder="0" scrolling="no" id="frame" allowfullscreen="">
                    <div id="mirador">Mirador Body</div>
