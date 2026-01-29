@@ -34,14 +34,14 @@ A class implementing the controller code for Mirador requests
 
 =cut
 
-our $VERSION = '2.1-libelle';
+our $VERSION = '2.3';
 
 our $metadata = {
     name   => 'IIIF Viewer',
     author => 'Mark Hofstetter',
     description => 'A plugin to serve IIIF data to viewers like Mirador',
     date_authored => '2024-05-14',
-    date_updated => '2026-01-06',
+    date_updated => '2026-01-29',
     version => $VERSION,
 };
 
