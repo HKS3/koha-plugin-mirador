@@ -36,6 +36,7 @@ sub create_paths_from_pdf {
         push(@images, {
             filename => $file->{filename},
             full_path => $file->{full_path},
+            displayed_path => sprintf("%s#%s", $file->{displayed_path}, $i),
             encoded_uri => sprintf("%s;%d", $file->{encoded_uri}, $i),
         });
     }
@@ -124,7 +125,7 @@ sub create_canvases {
         my $canvas_template = {
             '@id'    => $canvas_id,
             '@type'  => 'sc:Canvas',
-            'label'  => sprintf("# %s", $count),
+            'label'  => $files[0]->{displayed_path},
             # TODO fix this stupid-ass hack somehow
             # this nonsense here keeps the aspect ratio similar-ish which reduces stupid thumbnail padding in Mirador, but it also makes the actual canvas zoomed out
             'height' => $max_height * @elements,
