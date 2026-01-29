@@ -82,12 +82,14 @@ sub process_directory {
         my $filename = basename($image_path);
         my $u_image_path = decode('utf8', $image_path);
         # printf("%s - %s\n", $image_path, $u_image_path);
-        my $encoded_path = uri_encode( $u_image_path =~ s/^\Q$start_dir\/\E//r, { encode_reserved => 1 });
-		
+        my $displayed_path = $u_image_path =~ s/^\Q$start_dir\/\E//r;
+        my $encoded_path = uri_encode( $displayed_path, { encode_reserved => 1 });
+
         if ($filename =~ /\.pdf$/i) {
             my @pdfs = Koha::Plugin::HKS3::IIIF::create_paths_from_pdf({
                 filename => $filename,
                 full_path => $image_path,
+                displayed_path => $displayed_path,
                 encoded_uri => "$config->{iiif_server}/$encoded_path",
             });
             store_manifest(\@pdfs, $encoded_path, $relative_path, $filename.'.json');
@@ -96,6 +98,7 @@ sub process_directory {
             push @not_pdfs, {
                 filename => $filename,
                 full_path => $image_path,
+                displayed_path => $displayed_path,
                 encoded_uri => "$config->{iiif_server}/$encoded_path",
                 image_info => {
                     width => $img->getwidth,

@@ -36,6 +36,16 @@
             <input type="text" name="attribution_de" value="[% attribution_de %]" />
         </p>
         
+        <p>
+            <label for="show_in_sidebar"> Show in sidebar </label>
+            <input type="checkbox" name="show_in_sidebar" value="1" [% IF show_in_sidebar %]checked[% END %]/>
+        </p>
+
+        <p>
+            <label for="show_manifest_url"> Show IIIF manifest URL </label>
+            <input type="checkbox" name="show_manifest_url" value="1" [% IF show_manifest_url %]checked[% END %]/>
+        </p>
+
         <input type="hidden" name="save" value="1" />
 
         <input type="submit" value="Save configuration" />

@@ -34,14 +34,14 @@ A class implementing the controller code for Mirador requests
 
 =cut
 
-our $VERSION = 2.1;
+our $VERSION = '2.1-libelle';
 
 our $metadata = {
     name   => 'IIIF Viewer',
     author => 'Mark Hofstetter',
     description => 'A plugin to serve IIIF data to viewers like Mirador',
     date_authored => '2024-05-14',
-    date_updated => '2025-09-08',
+    date_updated => '2026-01-06',
     version => $VERSION,
 };
 
@@ -95,6 +95,9 @@ sub load_config {
             '@language' => 'ger'
         }
     ];
+
+    $config->{show_in_sidebar} = $self->retrieve_data('show_in_sidebar');
+    $config->{show_manifest_url} = $self->retrieve_data('show_manifest_url');
 }
 
 sub api_routes {
@@ -119,6 +122,9 @@ sub configure {
             manifest_server => $self->retrieve_data('manifest_server'),
             attribution_en  => $self->retrieve_data('attribution_en'),
             attribution_de  => $self->retrieve_data('attribution_de'),
+            
+            show_in_sidebar   => $self->retrieve_data('show_in_sidebar'), 
+            show_manifest_url => $self->retrieve_data('show_manifest_url'),
         );
 
         $self->output_html( $template->output() );
@@ -130,6 +136,8 @@ sub configure {
                 manifest_server => $cgi->param('manifest_server'),
                 attribution_en  => $cgi->param('attribution_en'),
                 attribution_de  => $cgi->param('attribution_de'),
+                show_in_sidebar   => !!$cgi->param('show_in_sidebar'), 
+                show_manifest_url => !!$cgi->param('show_manifest_url'),
                 last_configured_by => C4::Context->userenv->{'number'},
             }
         );
@@ -247,8 +255,17 @@ sub opac_js {
 
     return unless CGI->new->script_name eq '/opac/opac-detail.pl';
 
+    my $showManifestUrl = $config->{show_manifest_url} ? 'true' : 'false';
+    my $showInSidebar = $config->{show_in_sidebar} ? 'true' : 'false';
+
     my $payload = $self->mbf_read('opac.js');
-    return "<script> $payload </script>";
+    return "<script>
+        \$(document).ready(function() {
+            let showManifestUrl = $showManifestUrl;
+            let showInSidebar = $showInSidebar;
+            $payload
+        });
+    </script>";
 }
 
 1;

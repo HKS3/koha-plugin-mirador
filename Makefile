@@ -1,5 +1,9 @@
 .PHONY: cantaloupe install
 
+build:
+	cd mirador-js && yarn && yarn build
+	cp mirador-js/dist/mirador.mjs Koha/Plugin/HKS3/Mirador/mirador.js
+
 install:
 	rsync -av Koha ${PLUGINS_DIR}/
 

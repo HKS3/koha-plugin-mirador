@@ -13,5 +13,20 @@
                 }
             }
         }
+    },
+    "/mirador.js": {
+        "get": {
+            "x-mojo-to": "Static#get",
+            "tags": [ "pluginStatic" ],
+            "operationId": "GetHKS3Mirador",
+            "responses": {
+                "200": {
+                    "description": "HKS3 mirador.js module",
+                    "schema": {
+                      "type": "file"
+                    }
+                }
+            }
+        }
     }
 }
