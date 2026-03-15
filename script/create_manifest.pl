@@ -82,7 +82,7 @@ sub process_directory {
         my $filename = basename($image_path);
         my $u_image_path = decode('utf8', $image_path);
         # printf("%s - %s\n", $image_path, $u_image_path);
-        my $displayed_path = $u_image_path =~ s/^\Q$start_dir\/\E//r;
+        my $displayed_path = $u_image_path =~ s/^\Q$start_dir\E//r;
         my $encoded_path = uri_encode( $displayed_path, { encode_reserved => 1 });
 
         if ($filename =~ /\.pdf$/i) {
